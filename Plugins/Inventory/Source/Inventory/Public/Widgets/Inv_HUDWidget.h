@@ -9,8 +9,15 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class INVENTORY_API UInv_HUDWidget : public UUserWidget
 {
 	GENERATED_BODY()
+	
+public:
+	UFUNCTION(BlueprintImplementableEvent, Category="Inv")
+	void ShowPickupMessage(const FText& Message);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Inv")
+	void HidePickupMessage();
 };

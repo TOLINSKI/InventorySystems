@@ -24,7 +24,6 @@ public class Inventory : ModuleRules
 			new string[]
 			{
 				"Core", 
-				"EnhancedInput",
 			}
 			);
 			
@@ -36,6 +35,8 @@ public class Inventory : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore", 
+				"EnhancedInput",
+				"UMG",
 			}
 			);
 		
