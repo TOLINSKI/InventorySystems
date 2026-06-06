@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "BaseBox",
+	"Description": "A plugin with handy tools for an project",
+	"Category": "Other",
+	"CreatedBy": "Chaos Box Tools",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "BaseBox",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

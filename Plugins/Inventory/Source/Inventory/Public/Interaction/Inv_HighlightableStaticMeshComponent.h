@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable, meta=(BlueprintSpawnableComponent), DisplayName="HighlightableStaticMesh")
 class INVENTORY_API UInv_HighlightableStaticMeshComponent : public UStaticMeshComponent, public IInv_Highlightable
 {
 	GENERATED_BODY()

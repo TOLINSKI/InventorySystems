@@ -8,6 +8,8 @@
 
 #include "Inv_PlayerController.generated.h"
 
+class UInv_InventoryComponent;
+class UBase_ActorTrackingComponent;
 class UInv_HUDWidget;
 class UInputMappingContext;
 /**
@@ -21,8 +23,6 @@ class INVENTORY_API AInv_PlayerController : public APlayerController
 public:
 	AInv_PlayerController();
 
-	virtual void Tick( float DeltaTime ) override;
-	
 protected:
 	virtual void BeginPlay() override;
 
@@ -30,17 +30,23 @@ protected:
 
 	void Input_Interact();
 	
+	UFUNCTION(BlueprintCallable, Category="Inv Input")
+	void Input_ToggleInventory();
+	
 	UPROPERTY(EditAnywhere, Category ="Inv Input")
 	TArray<UInputMappingContext*> DefaultMappingContexts;
 	
 	UPROPERTY(EditAnywhere, Category ="Inv Input")
 	TObjectPtr<UInputAction> InteractAction;
 
+	UPROPERTY(EditAnywhere, Category ="Inv Input")
+	TObjectPtr<UInputAction> ToggleInventoryAction;
+	
 	UPROPERTY(EditAnywhere, Category ="Inv UI")
 	TSubclassOf<UInv_HUDWidget> HUDWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category ="Inv Gameplay")
-	TObjectPtr<class UInv_ActorTracker> ActorTracker;
+	TObjectPtr<UBase_ActorTrackingComponent> ActorTracking;
 	
 private:
 	void SetupHUDWidget();
@@ -48,8 +54,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInv_HUDWidget> HUDWidget;
 	
-	TWeakObjectPtr<AActor> CurrentHitActor;
-	TWeakObjectPtr<AActor> LastHitActor;
+	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 	
 	UFUNCTION()
 	void OnBeginTrackingActor(AActor* Actor);

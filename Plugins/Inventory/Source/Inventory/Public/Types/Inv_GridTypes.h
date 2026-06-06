@@ -1,0 +1,14 @@
+﻿// Copyright Chaos Box Games 2026, All rights reserved.
+
+#pragma once
+
+#include "Inv_GridTypes.generated.h"
+
+UENUM(BlueprintType)
+enum class EInv_ItemCategory : uint8
+{
+	None,
+	Equippable,
+	Consumable,
+	Craftable,
+};

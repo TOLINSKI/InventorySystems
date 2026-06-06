@@ -7,11 +7,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "Inventory.h"
 #include "Blueprint/UserWidget.h"
-#include "Widgets/Inv_HUDWidget.h"
-#include "Engine/Engine.h"
+#include "Widgets/HUD/Inv_HUDWidget.h"
 #include "Interaction/Inv_HighlightableStaticMeshComponent.h"
 #include "Items/Components/Inv_ItemComponent.h"
-#include "Utils/Inv_ActorTracker.h"
+#include "Components/Base_ActorTrackingComponent.h"
+#include "InventoryManagement/Inv_InventoryComponent.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -19,6 +19,8 @@ AInv_PlayerController::AInv_PlayerController()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+	
+	ActorTracking = CreateDefaultSubobject<UBase_ActorTrackingComponent>("ActorTracker");
 }
 
 void AInv_PlayerController::BeginPlay()
@@ -26,8 +28,11 @@ void AInv_PlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	SetupHUDWidget();
-	ActorTracker->OnBeginTrackingActor.AddDynamic(this, &ThisClass::AInv_PlayerController::OnBeginTrackingActor);
-	ActorTracker->OnEndTrackingActor.AddDynamic(this, &ThisClass::OnEndTrackingActor);
+	ActorTracking->OnBeginTrackingActor.AddDynamic(this, &ThisClass::AInv_PlayerController::OnBeginTrackingActor);
+	ActorTracking->OnEndTrackingActor.AddDynamic(this, &ThisClass::OnEndTrackingActor);
+	
+	InventoryComponent = FindComponentByClass<UInv_InventoryComponent>();
+	ensure(InventoryComponent.IsValid());
 }
 
 void AInv_PlayerController::SetupInputComponent()
@@ -49,19 +54,20 @@ void AInv_PlayerController::SetupInputComponent()
 		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 		
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
+		EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &ThisClass::Input_ToggleInventory);
 	}
-}
-
-void AInv_PlayerController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-	AActor* HitActor = ActorTracker->TraceForActors(this);
 }
 
 void AInv_PlayerController::Input_Interact()
 {
 	UE_LOG(LogInventory, Display, TEXT("Interact Input Pressed"));
+}
+
+void AInv_PlayerController::Input_ToggleInventory()
+{
+	if (!ensure(InventoryComponent.IsValid())) return;
+	
+	InventoryComponent->ToggleInventoryMenu();
 }
 
 void AInv_PlayerController::SetupHUDWidget()
@@ -80,7 +86,7 @@ void AInv_PlayerController::OnBeginTrackingActor(AActor* Actor)
 	if (!ensure(ItemComp)) return;
 		
 	HUDWidget->ShowPickupMessage(ItemComp->GetPickupMessage());
-	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_HighlightableStaticMeshComponent::StaticClass());
+	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
 	if (!ensure(IsValid(Highlightable))) return;
 		
 	IInv_Highlightable::Execute_Highlight(Highlightable);
@@ -90,7 +96,7 @@ void AInv_PlayerController::OnEndTrackingActor(AActor* Actor)
 {
 	HUDWidget->HidePickupMessage();
 		
-	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_HighlightableStaticMeshComponent::StaticClass());
+	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
 	if (!ensure(IsValid(Highlightable))) return;
 		
 	IInv_Highlightable::Execute_UnHighlight(Highlightable);
