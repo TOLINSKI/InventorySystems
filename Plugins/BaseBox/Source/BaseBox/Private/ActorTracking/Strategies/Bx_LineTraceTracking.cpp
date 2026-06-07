@@ -1,7 +1,7 @@
 ﻿// Copyright Chaos Box Games 2026, All rights reserved.
 
 
-#include "Components/Base_ActorTrackingComponent.h"
+#include "ActorTracking/Strategies/Bx_LineTraceTracking.h"
 
 #include "BaseBox.h"
 #include "Engine/Engine.h"
@@ -12,31 +12,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 
-
-UBase_ActorTrackingComponent::UBase_ActorTrackingComponent()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
-}
-
-
-void UBase_ActorTrackingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                            FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	TraceForActors();
-}
-
-void UBase_ActorTrackingComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	OwningPlayer = Cast<APlayerController>(GetOwner());
-	ensure(OwningPlayer.IsValid());
-}
-
-AActor* UBase_ActorTrackingComponent::TraceForActors()
+AActor* UBx_LineTraceTracking::TraceForActors()
 {
 	if (!IsValid(GEngine) || !IsValid(GEngine->GameViewport)) return nullptr;
 	
@@ -44,7 +20,7 @@ AActor* UBase_ActorTrackingComponent::TraceForActors()
 	GEngine->GameViewport->GetViewportSize(ViewportSize);
 	const FVector2D ViewportCenter = ViewportSize / 2.f;
 	
-	APlayerController* PlayerController = OwningPlayer.Get();
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 	if (!ensure(IsValid(PlayerController))) return nullptr;
 	
 	FVector CameraCenter;
@@ -60,8 +36,7 @@ AActor* UBase_ActorTrackingComponent::TraceForActors()
 	
 	if (CachedActor.IsValid() && bDrawDebug)
 	{
-		LastHitLocation = HitResult.ImpactPoint;
-		DrawDebugPoint(PlayerController->GetWorld(), HitResult.ImpactPoint, 25.f, FColor::Green, false, -1.f, 1);
+		DrawDebugPoint(PlayerController->GetWorld(), HitResult.ImpactPoint, 20.f, FColor::Green, false, -1.f, 1);
 	}
 	
 	if (CachedActor == HitActor)
@@ -71,7 +46,7 @@ AActor* UBase_ActorTrackingComponent::TraceForActors()
 	
 	if (bIsHitActorRelevant)
 	{
-		OnBeginTrackingActor.Broadcast(HitActor);
+		OnBeginTrackingActor.ExecuteIfBound(HitActor);
 		
 		if (bDrawDebug)
 		{
@@ -84,7 +59,7 @@ AActor* UBase_ActorTrackingComponent::TraceForActors()
 	
 	if (CachedActor.IsValid())
 	{
-		OnEndTrackingActor.Broadcast(CachedActor.Get());
+		OnEndTrackingActor.ExecuteIfBound(CachedActor.Get());
 		
 		if (bDrawDebug)
 		{
@@ -98,4 +73,3 @@ AActor* UBase_ActorTrackingComponent::TraceForActors()
 	CachedActor = HitActor;
 	return HitActor;
 }
-

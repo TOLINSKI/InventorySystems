@@ -6,16 +6,17 @@
 #include "Widgets/Inventory/Inv_InventoryWidgetBase.h"
 
 #include "Types/Inv_GridTypes.h"
+#include "Types/Inv_InventoryTypes.h"
 
-#include "Inv_InventorySpatialWidget.generated.h"
+#include "Inv_SpatialInventory.generated.h"
 
 class UWidgetSwitcher;
-class UInv_InventoryGridWidget;
+class UInv_InventoryGrid;
 /**
  * 
  */
 UCLASS()
-class INVENTORY_API UInv_InventorySpatialWidget : public UInv_InventoryWidgetBase
+class INVENTORY_API UInv_SpatialInventory : public UInv_InventoryWidgetBase
 {
 	GENERATED_BODY()
 	
@@ -23,22 +24,26 @@ public:
 	
 	virtual void NativeOnInitialized() override;
 	
+	virtual FInv_SlotAvailabilityResult GetSlotAvailability(UInv_ItemComponent* ItemComponent) const;
+	
 	UFUNCTION(BlueprintCallable)
 	void SetGridCategory(EInv_ItemCategory Category);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCategorySelected(EInv_ItemCategory Category);
+
+	FInv_SlotAvailabilityResult HasAvailableSpaceForItem(UInv_InventoryItem* Item) const;
 	
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidgetSwitcher> Grid_Switcher;
 	
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UInv_InventoryGridWidget> Grid_Equippables;
+	TObjectPtr<UInv_InventoryGrid> Grid_Equippables;
 	
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UInv_InventoryGridWidget> Grid_Consumables;
+	TObjectPtr<UInv_InventoryGrid> Grid_Consumables;
 	
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UInv_InventoryGridWidget> Grid_Craftables;
+	TObjectPtr<UInv_InventoryGrid> Grid_Craftables;
 };

@@ -4,11 +4,62 @@
 #include "InventoryManagement/Inv_InventoryComponent.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/Inv_InventoryWidgetBase.h"
 
-UInv_InventoryComponent::UInv_InventoryComponent()
+UInv_InventoryComponent::UInv_InventoryComponent() : InventoryArray(this)
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
+	bReplicateUsingRegisteredSubObjectList = true;
+}
+
+void UInv_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass, InventoryArray);
+}
+
+void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComponent)
+{
+	FInv_SlotAvailabilityResult Result = InventoryMenu->GetSlotAvailability(ItemComponent);
+	if (Result.AvailableSlots <= 0)
+	{
+		OnItemAddingFailed.Broadcast();
+		return;
+	}
+	
+	if (Result.Item.IsValid() && Result.bIsStackable)
+	{
+		// TODO: Add stacks to an item that already exists in the inventory (not create a new item of this type)
+		Server_AddStacksToItem(ItemComponent, Result.AvailableSlots, Result.Remainder);
+	}
+	else if (Result.AvailableSlots > 0)
+	{
+		// This item doesn't exist in the inventory
+		// TODO: Create a new item and update all pertinent slots
+		Server_AddNewItem(ItemComponent, Result.bIsStackable ? Result.AvailableSlots : 0);
+	}
+}
+
+void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount)
+{
+	UInv_InventoryItem* Item = InventoryArray.AddItem(ItemComponent);
+	
+	const ENetMode NetMode = GetOwner()->GetNetMode();
+	if (NetMode == NM_ListenServer || NetMode == NM_Standalone)
+	{
+		OnItemAdded.Broadcast(Item);
+	}
+	
+	// TODO: Tell Item Component to destroy it's owner
+}
+
+void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount,
+	int32 Remainder)
+{
+	
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
@@ -38,6 +89,14 @@ void UInv_InventoryComponent::ToggleInventoryMenu()
 	else
 	{
 		OpenInventoryMenu();
+	}
+}
+
+void UInv_InventoryComponent::AddRepSubObj(UObject* SubObj)
+{
+	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && IsValid(SubObj))
+	{
+		AddReplicatedSubObject(SubObj);
 	}
 }
 

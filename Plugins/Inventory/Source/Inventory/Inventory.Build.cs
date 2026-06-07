@@ -23,7 +23,10 @@ public class Inventory : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", 
+				"Core",
+				"NetCore",
+				"StructUtils",
+				"GameplayTags"
 			}
 			);
 			
@@ -37,7 +40,7 @@ public class Inventory : ModuleRules
 				"SlateCore", 
 				"EnhancedInput",
 				"UMG",
-				"BaseBox"
+				"BaseBox",
 			}
 			);
 		

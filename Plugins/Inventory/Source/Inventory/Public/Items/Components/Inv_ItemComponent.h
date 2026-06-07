@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Types/Inv_itemSpec.h"
 #include "Inv_ItemComponent.generated.h"
+
+class UInv_InventoryItem;
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, BlueprintType)
 class INVENTORY_API UInv_ItemComponent : public UActorComponent
@@ -13,10 +17,17 @@ class INVENTORY_API UInv_ItemComponent : public UActorComponent
 
 public:
 	UInv_ItemComponent();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	FText GetPickupMessage() const { return PickupMessage; }
 	
+	FInv_ItemSpec GetItemSpec() const { return ItemSpec; }
+	
 protected:
-	UPROPERTY(EditAnywhere, Category="Inv UI")
+	UPROPERTY(Replicated, EditAnywhere, Category="Inventory")
+	FInv_ItemSpec ItemSpec;
+	
+	UPROPERTY(EditAnywhere, Category="Inventory")
 	FText PickupMessage;
 };

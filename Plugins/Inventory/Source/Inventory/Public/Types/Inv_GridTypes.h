@@ -4,11 +4,42 @@
 
 #include "Inv_GridTypes.generated.h"
 
-UENUM(BlueprintType)
-enum class EInv_ItemCategory : uint8
+class UInv_InventoryItem;
+
+USTRUCT()
+struct FInv_SlotAvailability
 {
-	None,
-	Equippable,
-	Consumable,
-	Craftable,
+	GENERATED_BODY()
+	
+	FInv_SlotAvailability() = default;
+	
+	FInv_SlotAvailability(int32 ItemIndex, int32 NumItems, bool bHasItem) 
+	: Index(ItemIndex)
+	, Amount(NumItems)
+	, bItemAtIndex(bHasItem) 
+	{}
+	
+	int32 Index { INDEX_NONE };
+	
+	int32 Amount { 0 };
+	
+	bool bItemAtIndex { false };
+};
+
+USTRUCT()
+struct FInv_SlotAvailabilityResult
+{
+	GENERATED_BODY()
+	
+	FInv_SlotAvailabilityResult() = default;
+	
+	TWeakObjectPtr<UInv_InventoryItem> Item;
+	
+	int32 AvailableSlots { 0 };
+	
+	int32 Remainder { 0 };
+	
+	bool bIsStackable { false };
+	
+	TArray<FInv_SlotAvailability> SlotAvailabilities;
 };

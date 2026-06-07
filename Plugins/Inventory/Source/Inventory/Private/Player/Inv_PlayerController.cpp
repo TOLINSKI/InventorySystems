@@ -10,7 +10,7 @@
 #include "Widgets/HUD/Inv_HUDWidget.h"
 #include "Interaction/Inv_HighlightableStaticMeshComponent.h"
 #include "Items/Components/Inv_ItemComponent.h"
-#include "Components/Base_ActorTrackingComponent.h"
+#include "ActorTracking/Bx_ActorTrackingComponent.h"
 #include "InventoryManagement/Inv_InventoryComponent.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
@@ -20,7 +20,7 @@ AInv_PlayerController::AInv_PlayerController()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	
-	ActorTracking = CreateDefaultSubobject<UBase_ActorTrackingComponent>("ActorTracker");
+	ActorTracking = CreateDefaultSubobject<UBx_ActorTrackingComponent>("ActorTracker");
 }
 
 void AInv_PlayerController::BeginPlay()
@@ -60,7 +60,13 @@ void AInv_PlayerController::SetupInputComponent()
 
 void AInv_PlayerController::Input_Interact()
 {
-	UE_LOG(LogInventory, Display, TEXT("Interact Input Pressed"));
+	AActor* Actor = ActorTracking->GetTrackedActor();
+	if (!IsValid(Actor)) return;
+	
+	UInv_ItemComponent* ItemComponent = Actor->FindComponentByClass<UInv_ItemComponent>();
+	if (!ensure(IsValid(ItemComponent))) return;
+	
+	InventoryComponent->TryAddItem(ItemComponent);
 }
 
 void AInv_PlayerController::Input_ToggleInventory()
@@ -85,7 +91,7 @@ void AInv_PlayerController::OnBeginTrackingActor(AActor* Actor)
 	UInv_ItemComponent* ItemComp = Actor->FindComponentByClass<UInv_ItemComponent>();
 	if (!ensure(ItemComp)) return;
 		
-	HUDWidget->ShowPickupMessage(ItemComp->GetPickupMessage());
+	HUDWidget->ShowItemMessage(ItemComp->GetPickupMessage());
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
 	if (!ensure(IsValid(Highlightable))) return;
 		
@@ -94,7 +100,7 @@ void AInv_PlayerController::OnBeginTrackingActor(AActor* Actor)
 
 void AInv_PlayerController::OnEndTrackingActor(AActor* Actor)
 {
-	HUDWidget->HidePickupMessage();
+	HUDWidget->HideItemMessage();
 		
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
 	if (!ensure(IsValid(Highlightable))) return;

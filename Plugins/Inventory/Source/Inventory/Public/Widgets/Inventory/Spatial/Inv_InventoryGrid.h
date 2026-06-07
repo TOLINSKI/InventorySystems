@@ -5,17 +5,19 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 
-#include "Types/Inv_GridTypes.h"
+#include "Types/Inv_InventoryTypes.h"
 
-#include "Inv_InventoryGridWidget.generated.h"
+#include "Inv_InventoryGrid.generated.h"
 
+class UInv_InventoryItem;
 class UInv_GridSlot;
 class UGridPanel;
+
 /**
  * 
  */
 UCLASS()
-class INVENTORY_API UInv_InventoryGridWidget : public UUserWidget
+class INVENTORY_API UInv_InventoryGrid : public UUserWidget
 {
 	GENERATED_BODY()
 	
@@ -23,6 +25,8 @@ public:
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 	
 	virtual void NativePreConstruct() override;
+	
+	virtual void NativeOnInitialized() override;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
@@ -46,7 +50,12 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category="Inventory", meta = (BindWidget))
 	TObjectPtr<UGridPanel> GridPanel_Items; 
 
+	bool IsMatchingCategory(UInv_InventoryItem* Item);
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UInv_GridSlot>> GridSlots;
+	
+	UFUNCTION()
+	void AddItem(UInv_InventoryItem* Item);
 };
