@@ -6,7 +6,7 @@
 #include "InventoryManagement/Inv_InventoryComponent.h"
 #include "Items/Inv_InventoryItem.h"
 #include "Items/Components/Inv_ItemComponent.h"
-#include "Types/Inv_ItemSpec.h"
+#include "items/Manifest/Inv_ItemSpec.h"
 
 
 TArray<UInv_InventoryItem*> FInv_InventoryFastArray::GetAllItems() const

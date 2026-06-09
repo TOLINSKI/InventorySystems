@@ -1,6 +1,6 @@
 ﻿// Copyright Chaos Box Games 2026, All rights reserved.
 
-#include "Types/Inv_itemSpec.h"
+#include "Items/Manifest//Inv_itemSpec.h"
 
 #include "Items/Inv_InventoryItem.h"
 

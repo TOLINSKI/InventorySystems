@@ -1,0 +1,12 @@
+﻿// Copyright Chaos Box Games 2026, All rights reserved.
+
+#pragma once
+
+#include "NativeGameplayTags.h"
+
+namespace Inventory::Fragments
+{
+	INVENTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fragments);
+	INVENTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Grid);
+	INVENTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Icon);
+}

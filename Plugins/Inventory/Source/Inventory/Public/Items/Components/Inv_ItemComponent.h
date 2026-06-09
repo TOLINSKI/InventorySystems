@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Types/Inv_itemSpec.h"
+#include "Items/Manifest/Inv_itemSpec.h"
 #include "Inv_ItemComponent.generated.h"
 
 class UInv_InventoryItem;

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "StructUtils/InstancedStruct.h"
-#include "Types/Inv_ItemSpec.h"
+#include "Items/Manifest/Inv_ItemSpec.h"
 #include "UObject/Object.h"
 #include "Inv_InventoryItem.generated.h"
 

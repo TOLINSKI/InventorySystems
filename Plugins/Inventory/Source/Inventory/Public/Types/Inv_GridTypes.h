@@ -4,6 +4,7 @@
 
 #include "Inv_GridTypes.generated.h"
 
+class UInv_ItemWidget;
 class UInv_InventoryItem;
 
 USTRUCT()
@@ -42,4 +43,16 @@ struct FInv_SlotAvailabilityResult
 	bool bIsStackable { false };
 	
 	TArray<FInv_SlotAvailability> SlotAvailabilities;
+};
+
+USTRUCT()
+struct FInv_GridItem
+{
+	GENERATED_BODY()
+	
+	TWeakObjectPtr<UInv_InventoryItem> Item;
+	
+	TWeakObjectPtr<UInv_ItemWidget> ItemWidget;
+	
+	int32 GridIndex;
 };
