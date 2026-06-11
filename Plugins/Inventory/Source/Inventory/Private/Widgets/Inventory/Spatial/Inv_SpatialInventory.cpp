@@ -3,7 +3,9 @@
 
 #include "Widgets/Inventory/Spatial/Inv_SpatialInventory.h"
 
+#include "Inventory.h"
 #include "Components/WidgetSwitcher.h"
+#include "Items/Components/Inv_ItemComponent.h"
 #include "Widgets/Inventory/Spatial/Inv_InventoryGrid.h"
 
 void UInv_SpatialInventory::NativeOnInitialized()
@@ -13,11 +15,20 @@ void UInv_SpatialInventory::NativeOnInitialized()
 	SetGridCategory(EInv_ItemCategory::Equippable);
 }
 
-FInv_SlotAvailabilityResult UInv_SpatialInventory::GetSlotAvailability(UInv_ItemComponent* ItemComponent) const
+FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const
 {
-	FInv_SlotAvailabilityResult Result;
-	Result.AvailableSlots = 1;
-	return Result;
+	switch (ItemComponent->GetItemSpec().GetItemCategory())
+	{
+	case EInv_ItemCategory::Equippable:
+		return Grid_Equippables->GetSlotAvailability(ItemComponent);
+	case EInv_ItemCategory::Consumable:
+		return Grid_Consumables->GetSlotAvailability(ItemComponent);
+	case EInv_ItemCategory::Craftable:
+		return Grid_Craftables->GetSlotAvailability(ItemComponent);
+	default:
+		UE_LOG(LogInventory, Error, TEXT("ItemComponent doesn't have a valid Item Category."))
+		return FInv_SlotAvailabilityResult();
+	}
 }
 
 void UInv_SpatialInventory::SetGridCategory(EInv_ItemCategory Category)
@@ -37,12 +48,5 @@ void UInv_SpatialInventory::SetGridCategory(EInv_ItemCategory Category)
 	}
 	
 	OnCategorySelected(Category);
-}
-
-FInv_SlotAvailabilityResult UInv_SpatialInventory::HasAvailableSpaceForItem(UInv_InventoryItem* Item) const
-{
-	FInv_SlotAvailabilityResult Result;
-	Result.AvailableSlots = 1;
-	return Result;
 }
 

@@ -76,7 +76,7 @@ UInv_ItemWidget* UInv_InventoryGrid::CreateItemWidget(const FInv_GridFragment* G
 {
 	UInv_ItemWidget* ItemWidget = CreateWidget<UInv_ItemWidget>(GetOwningPlayer(), ItemWidgetClass);
 	FSlateBrush Brush;
-	Brush.SetResourceObject(IconFragment->GetTexture());
+	Brush.SetResourceObject(IconFragment->GetTexture());s
 	Brush.DrawAs = ESlateBrushDrawType::Image;
 	Brush.ImageSize = SlotSize * GridFragment->GetGridSpan();
 	ItemWidget->GetIconImage()->SetBrush(Brush);

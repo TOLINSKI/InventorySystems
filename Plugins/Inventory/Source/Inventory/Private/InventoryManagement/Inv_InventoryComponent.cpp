@@ -4,6 +4,8 @@
 #include "InventoryManagement/Inv_InventoryComponent.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Items/Inv_InventoryItem.h"
+#include "Items/Components/Inv_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/Inv_InventoryWidgetBase.h"
 
@@ -23,29 +25,29 @@ void UInv_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 
 void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComponent)
 {
-	FInv_SlotAvailabilityResult Result = InventoryMenu->GetSlotAvailability(ItemComponent);
-	if (Result.AvailableSlots <= 0)
+	FInv_SlotAvailabilityResult Result = InventoryMenu->GetGridAvailability(ItemComponent);
+	if (!Result.HasAvailability())
 	{
 		OnItemAddingFailed.Broadcast();
 		return;
 	}
 	
-	if (Result.Item.IsValid() && Result.bIsStackable)
+	Result.Item = InventoryArray.FindItemByTag(ItemComponent->GetItemSpec().GetItemTag());
+	if (Result.bIsStackable && Result.Item.IsValid())
 	{
-		// TODO: Add stacks to an item that already exists in the inventory (not create a new item of this type)
-		Server_AddStacksToItem(ItemComponent, Result.AvailableSlots, Result.Remainder);
+		Server_AddStacksToItem(ItemComponent, Result.StackCountToAdd);
+		OnStackChanged.Broadcast(Result);
 	}
-	else if (Result.AvailableSlots > 0)
+	else
 	{
-		// This item doesn't exist in the inventory
-		// TODO: Create a new item and update all pertinent slots
-		Server_AddNewItem(ItemComponent, Result.bIsStackable ? Result.AvailableSlots : 0);
+		Server_AddNewItem(ItemComponent, Result.StackCountToAdd);
 	}
 }
 
 void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount)
 {
 	UInv_InventoryItem* Item = InventoryArray.AddItem(ItemComponent);
+	Item->SetStackCount(StackCount);
 	
 	const ENetMode NetMode = GetOwner()->GetNetMode();
 	if (NetMode == NM_ListenServer || NetMode == NM_Standalone)
@@ -56,10 +58,13 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 	// TODO: Tell Item Component to destroy it's owner
 }
 
-void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount,
-	int32 Remainder)
+void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount)
 {
+	const FGameplayTag& ItemTag = ItemComponent->GetItemSpec().GetItemTag();
+	UInv_InventoryItem* Item = InventoryArray.FindItemByTag(ItemTag);
+	if (!ensure(IsValid(Item))) return;
 	
+	Item->AddStackCount(StackCount);
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
@@ -128,6 +133,3 @@ void UInv_InventoryComponent::ConstructInventory()
 	InventoryMenu = CreateWidget<UInv_InventoryWidgetBase>(OwningPlayer.Get(), InventoryMenuClass);
 	InventoryMenu->AddToViewport();
 }
-
-
-

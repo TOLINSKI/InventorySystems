@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Net/Serialization/FastArraySerializer.h"
+#include "GameplayTagContainer.h"
 
 #include "Inv_FastArray.generated.h"
 
@@ -55,6 +56,8 @@ struct FInv_InventoryFastArray : public FFastArraySerializer
 	UInv_InventoryItem* AddItem(UInv_ItemComponent* ItemComponent);
 	UInv_InventoryItem* AddItem(UInv_InventoryItem* Item);
 	void RemoveItem(UInv_InventoryItem* Item);
+	
+	UInv_InventoryItem* FindItemByTag(const FGameplayTag& Tag);
 	
 private:
 	// Replicated list of items

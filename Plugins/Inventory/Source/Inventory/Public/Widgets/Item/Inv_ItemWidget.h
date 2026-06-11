@@ -18,6 +18,9 @@ class INVENTORY_API UInv_ItemWidget : public UUserWidget
 public:
 	UImage* GetIconImage() const { return Image_Icon; }
 	
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
+	void StackCountChanged(int32 StackCount);
+	
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	TObjectPtr<UImage> Image_Icon;

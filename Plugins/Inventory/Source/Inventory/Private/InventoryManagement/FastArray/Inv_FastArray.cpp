@@ -87,3 +87,17 @@ void FInv_InventoryFastArray::RemoveItem(UInv_InventoryItem* Item)
 		}
 	}
 }
+
+UInv_InventoryItem* FInv_InventoryFastArray::FindItemByTag(const FGameplayTag& Tag)
+{
+	for (const auto& FastItem : Items)
+	{
+		UInv_InventoryItem* Item = FastItem.Get();
+		if (Item->GetItemTag() == Tag)
+		{
+			return Item;
+		}
+	}
+	
+	return nullptr;
+}

@@ -7,12 +7,13 @@
 #include "FastArray/Inv_FastArray.h"
 #include "Inv_InventoryComponent.generated.h"
 
-
 class UInv_ItemComponent;
 class UInv_InventoryItem;
 class UInv_InventoryWidgetBase;
+struct FInv_SlotAvailabilityResult;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChanged, UInv_InventoryItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryStackChanged, const FInv_SlotAvailabilityResult&, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryActionFailed);
 
 
@@ -35,6 +36,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Inv Events")
 	FInventoryActionFailed OnItemAddingFailed;
 	
+	UPROPERTY(BlueprintAssignable, Category="Inv Events")
+	FInventoryStackChanged OnStackChanged;
+	
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Inventory")
 	void TryAddItem(UInv_ItemComponent* ItemComponent);
 	
@@ -42,7 +46,7 @@ public:
 	void Server_AddNewItem(UInv_ItemComponent* ItemComponent, int32 StackCount);
 	
 	UFUNCTION(Server, Reliable)
-	void Server_AddStacksToItem(UInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder);
+	void Server_AddStacksToItem(UInv_ItemComponent* ItemComponents,  int32 StackCount);
 	
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void OpenInventoryMenu();

@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Inv_GridSlot.generated.h"
 
+class UWidgetSwitcher;
 class UImage;
 
 /**
@@ -19,13 +20,31 @@ class INVENTORY_API UInv_GridSlot : public UUserWidget
 	virtual void NativePreConstruct() override;
 	
 public:
+	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
+	int32 GetArrayIndex() const { return ArrayIndex; }
+	
+	void SetOccupied(bool bIsOccupied);
+	bool IsOccupied() const;
+	
+	void SetSlotSize(FIntPoint Size);
+	
+protected:
 	UPROPERTY(BlueprintReadOnly, Category="Inventory")
 	int32 ArrayIndex;
-
-	UPROPERTY(EditAnywhere, Category="Inventory")
-	FVector2D SlotSize;
 	
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_GridSlot;
+	
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	FSlateBrush Brush_Unoccupied;
+	
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	FSlateBrush Brush_Occupied;
+	
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	FSlateBrush Brush_Selected;
+	
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	FSlateBrush Brush_Disabled;
 };

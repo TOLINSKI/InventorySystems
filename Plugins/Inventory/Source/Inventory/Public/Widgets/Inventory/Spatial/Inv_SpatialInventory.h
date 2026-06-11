@@ -24,15 +24,13 @@ public:
 	
 	virtual void NativeOnInitialized() override;
 	
-	virtual FInv_SlotAvailabilityResult GetSlotAvailability(UInv_ItemComponent* ItemComponent) const;
-	
 	UFUNCTION(BlueprintCallable)
 	void SetGridCategory(EInv_ItemCategory Category);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCategorySelected(EInv_ItemCategory Category);
 
-	FInv_SlotAvailabilityResult HasAvailableSpaceForItem(UInv_InventoryItem* Item) const;
+	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const override;
 	
 private:
 	UPROPERTY(meta = (BindWidget))

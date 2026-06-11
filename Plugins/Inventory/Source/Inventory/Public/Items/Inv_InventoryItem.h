@@ -6,6 +6,7 @@
 #include "StructUtils/InstancedStruct.h"
 #include "Items/Manifest/Inv_ItemSpec.h"
 #include "UObject/Object.h"
+#include "GameplayTagContainer.h"
 #include "Inv_InventoryItem.generated.h"
 
 /**
@@ -27,7 +28,16 @@ public:
 	
 	FInv_ItemSpec& GetItemSpecMutable() { return ItemSpec.GetMutable<FInv_ItemSpec>(); }
 	
+	void SetStackCount(int32 Count) { TotalStackCount = Count; }
+	
+	void AddStackCount(int32 Count) { TotalStackCount += Count; }
+	
+	FGameplayTag GetItemTag() const;
+	
 private:
 	UPROPERTY(Replicated, VisibleAnywhere, Category="Inventory", meta = (BaseStruct = "/Script/Inventory.Inv_ItemSpec"))
 	FInstancedStruct ItemSpec;
+	
+	UPROPERTY(Replicated)
+	int32 TotalStackCount { 0 };
 };

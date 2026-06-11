@@ -17,5 +17,5 @@ class INVENTORY_API UInv_InventoryWidgetBase : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	virtual FInv_SlotAvailabilityResult GetSlotAvailability(UInv_ItemComponent* ItemComponent) const { return FInv_SlotAvailabilityResult(); }
+	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const { return FInv_SlotAvailabilityResult(); }
 };
