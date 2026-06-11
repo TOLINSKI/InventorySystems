@@ -25,8 +25,10 @@ class INVENTORY_API UInv_InventoryComponent : public UActorComponent
 public:
 	UInv_InventoryComponent();
 	
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	UPROPERTY(BlueprintAssignable, Category="Inv Events")
 	FInventoryItemChanged OnItemAdded;
 	
@@ -64,9 +66,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	bool IsValidInventory() const;
-
-protected:
-	virtual void BeginPlay() override;
 
 private:
 	TWeakObjectPtr<APlayerController> OwningPlayer;

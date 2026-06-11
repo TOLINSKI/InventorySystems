@@ -37,7 +37,7 @@ void UInv_InventoryGrid::NativeOnInitialized()
 	InventoryComponent->OnStackChanged.AddDynamic(this, &ThisClass::AddResult);
 }
 
-FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const UInv_ItemComponent* ItemComponent)
+FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const
 {
 	return GetSlotAvailability(ItemComponent->GetItemSpec());
 }
@@ -61,7 +61,7 @@ void UInv_InventoryGrid::ConstructGrid()
 			UInv_GridSlot* GridSlot = CreateWidget<UInv_GridSlot>(this, GridSlotClass);
 			GridSlot->SetSlotSize(GridSlotSize);
 			GridPanel_Items->AddChildToGrid(GridSlot, Row, Column);
-			GridSlot->SetArrayIndex(UInv_WidgetUtils::GridPositionToIndex({Row, Column}, Columns));
+			GridSlot->SetArrayIndex(UInv_WidgetUtils::GridPositionToIndex({Column, Row}, Columns));
 			GridSlots.Add(GridSlot);
 		}
 	}
@@ -85,13 +85,14 @@ UInv_ItemWidget* UInv_InventoryGrid::CreateItemWidget(const FInv_GridFragment* G
 
 void UInv_InventoryGrid::AddGridItem(const FInv_GridItem& GridItem)
 {
-	const FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(GridItem.GetIndex(), Columns);
+	const int32 Index = GridItem.GetIndex();
+	const FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(Index, Columns);
 	const FIntPoint GridSpan = GridItem.GetGridSpan();
-	UGridSlot* GridSlot = GridPanel_Items->AddChildToGrid(GridItem.GetItemWidget(), GridPosition.Y, GridPosition.X);
-	GridSlot->SetColumnSpan(GridSpan.X);
-	GridSlot->SetRowSpan(GridSpan.Y);
+	UGridSlot* ItemSlot = GridPanel_Items->AddChildToGrid(GridItem.GetItemWidget(), GridPosition.Y, GridPosition.X);
+	ItemSlot->SetColumnSpan(GridSpan.X);
+	ItemSlot->SetRowSpan(GridSpan.Y);
 
-	UInv_WidgetUtils::ForEach2D(GridSlots, GridPosition, GridSpan, Columns, [](UInv_GridSlot* GridSlot)
+	UInv_WidgetUtils::ForEach2D(GridSlots, Index, GridSpan, Columns, [](UInv_GridSlot* GridSlot)
 	{
 		GridSlot->SetOccupied(true);
 	});
@@ -101,7 +102,7 @@ void UInv_InventoryGrid::AddGridItem(const FInv_GridItem& GridItem)
 
 void UInv_InventoryGrid::Stack(const FInv_SlotAvailability& SlotAvailability)
 {
-	FInv_GridItem* GridItem = GetGridItemAtIndex(SlotAvailability.ItemIndex);
+	FInv_GridItem* GridItem = GetGridItemAtIndexMutable(SlotAvailability.ItemIndex);
 	check(GridItem != nullptr);
 	
 	const int32 StackCount = GridItem->AddStackCount(SlotAvailability.StackCount);
@@ -148,7 +149,7 @@ void UInv_InventoryGrid::AddResult(const FInv_SlotAvailabilityResult& Result)
 	}
 }
 
-FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_ItemSpec& ItemSpec)
+FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const
 {
 	TSet<int32> Visited;
 	FInv_SlotAvailabilityResult Result;
@@ -159,12 +160,12 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 	Result.bIsStackable = StackFragment != nullptr;
 	Result.Remainder = StackFragment != nullptr ? StackFragment->GetStackCount() : 1;
 	
-	// Dispose all Stackable
+	// Handle all stackable slots first
 	if (Result.bIsStackable)
 	{
 		for (int32 i = 0; i < GridSlots.Num(); ++i)
 		{
-			if (FInv_GridItem* GridItem = GetGridItemAtIndex(i))
+			if (const FInv_GridItem* GridItem = GetGridItemAtIndex(i))
 			{
 				if (Visited.Contains(i)) continue;
 				Visited.Add(i);
@@ -192,14 +193,21 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 		}
 	}
 	
+	// All stackable options handled, look for empty spots
 	for (int32 i = 0; i < GridSlots.Num(); ++i)
 	{
 		if (Visited.Contains(i)) continue;
 		Visited.Add(i);
 		
-		TSet<int32> Occupied = GetOccupiedIndices(i, GridFragment->GetGridSpan());
+		const FIntPoint GridSpan = GridFragment->GetGridSpan();
+		if (!CanFitRange(i, GridSpan)) continue;
+		
+		TSet<int32> Occupied = FindOccupiedIndices(i, GridSpan);
 		Visited.Append(Occupied);
 		if (Occupied.Num() > 0) continue;
+		
+		TSet<int32> ToOccupy = OccupyIndices(i, GridSpan);
+		Visited.Append(ToOccupy);
 		
 		if (Result.bIsStackable)
 		{
@@ -231,37 +239,37 @@ bool UInv_InventoryGrid::IsIndexOccupied(int32 Index) const
 	return GridItems.ContainsByPredicate([Index](const FInv_GridItem& Item){ return Item.IsIndexOccupied(Index); });
 }
 
-TSet<int32> UInv_InventoryGrid::FindOccupiedSlots(int32 Index, const FIntPoint& GridSpan)
+bool UInv_InventoryGrid::CanFitRange(int32 Index, const FIntPoint& Range2D) const
 {
-	TSet<int32> Occupied;
-	
-	FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(Index, Columns);
-	UInv_WidgetUtils::ForEach2D(GridSlots, GridPosition, GridSpan, Columns, [this, &Occupied, GridPosition](const UInv_GridSlot* GridSlot)
-	{
-		if (!GridSlot->IsOccupied()) return;
-		
-		const int32 VisitedIndex = UInv_WidgetUtils::GridPositionToIndex(GridPosition, Columns);
-		if (UInv_InventoryItem* Item = GetItemObjectAtIndex(VisitedIndex))
-		{
-			Occupied.Add(VisitedIndex);
-		}
-	});
-
-	return Occupied;
+	const FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(Index, Columns);
+	const FIntPoint RightCorner = GridPosition + (Range2D - FIntPoint(1,1));
+	const int32 RightCornerIndex = UInv_WidgetUtils::GridPositionToIndex(RightCorner, Columns);
+	return GridSlots.IsValidIndex(RightCornerIndex);
 }
 
-TSet<int32> UInv_InventoryGrid::GetOccupiedIndices(int32 Index, const FIntPoint& Range2D)
+TSet<int32> UInv_InventoryGrid::FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const
 {
 	TSet<int32> Occupied;
 	
-	const FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(Index, Columns);
-	UInv_WidgetUtils::ForEach2D(GridSlots, GridPosition, Range2D, Columns, [this, &Occupied](const UInv_GridSlot* GridSlot)
+	UInv_WidgetUtils::ForEach2D(GridSlots, Index, Range2D, Columns, [&Occupied](const UInv_GridSlot* GridSlot)
 	{
 		if (GridSlot->IsOccupied())
 		{
-			const int32 Index = GridSlots.IndexOfByKey(GridSlot);
-			Occupied.Add(Index);
+			Occupied.Add(GridSlot->GetArrayIndex());
 		}
+	});
+	
+	return Occupied;
+}
+
+TSet<int32> UInv_InventoryGrid::OccupyIndices(int32 Index, const FIntPoint& Range2D) const
+{
+	TSet<int32> Occupied;
+	
+	UInv_WidgetUtils::ForEach2D(GridSlots, Index, Range2D, Columns, [&Occupied](const UInv_GridSlot* GridSlot)
+	{
+		const int32 ArrayIndex = GridSlot->GetArrayIndex();
+		Occupied.Add(ArrayIndex);
 	});
 	
 	return Occupied;
@@ -277,11 +285,19 @@ UInv_InventoryItem* UInv_InventoryGrid::GetItemObjectAtIndex(int32 Index) const
 	return Item != nullptr ? Item->GetItem() : nullptr;
 }
 
-FInv_GridItem* UInv_InventoryGrid::GetGridItemAtIndex(int32 Index)
+const FInv_GridItem* UInv_InventoryGrid::GetGridItemAtIndex(int32 Index) const
 {
-	return GridItems.FindByPredicate([Index](FInv_GridItem& Item)
+	return GridItems.FindByPredicate([Index](const FInv_GridItem& Item)
 	{
 		return Item.GetIndex() == Index;
 	});
+}
+
+FInv_GridItem* UInv_InventoryGrid::GetGridItemAtIndexMutable(int32 Index)
+{
+	return GridItems.FindByPredicate([Index](const FInv_GridItem& Item)
+{
+	return Item.GetIndex() == Index;
+});
 }
 

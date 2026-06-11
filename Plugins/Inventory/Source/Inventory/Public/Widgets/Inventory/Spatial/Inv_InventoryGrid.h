@@ -35,7 +35,7 @@ public:
 	
 	virtual void NativeOnInitialized() override;
 	
-	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent);
+	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
@@ -89,15 +89,19 @@ private:
 	
 	bool IsIndexOccupied(int32 Index) const;
 	
-	TSet<int32> FindOccupiedSlots(int32 Index, const FIntPoint& GridSpan);
-
-	TSet<int32> GetOccupiedIndices(int32 Index, const FIntPoint& Range2D);
+	bool CanFitRange(int32 Index, const FIntPoint& Range2D) const;
+	
+	TSet<int32> FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const;
+	
+	TSet<int32> OccupyIndices(int32 Index, const FIntPoint& Range2D) const;
 	
 	UInv_InventoryItem* GetItemObjectAtIndex(int32 Index) const;
 	
-	FInv_GridItem* GetGridItemAtIndex(int32 Index);
+	const FInv_GridItem* GetGridItemAtIndex(int32 Index) const;
 	
-	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec);
+	FInv_GridItem* GetGridItemAtIndexMutable(int32 Index);
+	
+	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
 
 };

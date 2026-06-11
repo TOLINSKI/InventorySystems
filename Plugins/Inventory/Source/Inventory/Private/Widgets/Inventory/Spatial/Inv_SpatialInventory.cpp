@@ -12,41 +12,34 @@ void UInv_SpatialInventory::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	
-	SetGridCategory(EInv_ItemCategory::Equippable);
+	SwitchGridCategory(EInv_ItemCategory::Equippable);
 }
 
 FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const
 {
-	switch (ItemComponent->GetItemSpec().GetItemCategory())
-	{
-	case EInv_ItemCategory::Equippable:
-		return Grid_Equippables->GetSlotAvailability(ItemComponent);
-	case EInv_ItemCategory::Consumable:
-		return Grid_Consumables->GetSlotAvailability(ItemComponent);
-	case EInv_ItemCategory::Craftable:
-		return Grid_Craftables->GetSlotAvailability(ItemComponent);
-	default:
-		UE_LOG(LogInventory, Error, TEXT("ItemComponent doesn't have a valid Item Category."))
-		return FInv_SlotAvailabilityResult();
-	}
+	const UInv_InventoryGrid* GridToCheck = GetGridByCategory(ItemComponent->GetItemSpec().GetItemCategory());
+	check(IsValid(GridToCheck));
+	return GridToCheck->GetSlotAvailability(ItemComponent);
 }
 
-void UInv_SpatialInventory::SetGridCategory(EInv_ItemCategory Category)
+void UInv_SpatialInventory::SwitchGridCategory(EInv_ItemCategory Category)
+{
+	auto GridToActivate = GetGridByCategory(Category);
+	Grid_Switcher->SetActiveWidget(GridToActivate);
+	
+	OnCategorySelected(Category);
+}
+
+UInv_InventoryGrid* UInv_SpatialInventory::GetGridByCategory(EInv_ItemCategory Category) const
 {
 	switch (Category) {
 	case EInv_ItemCategory::None:
-		break;
-	case EInv_ItemCategory::Equippable:
-		Grid_Switcher->SetActiveWidget(Grid_Equippables);
-		break;
-	case EInv_ItemCategory::Consumable:
-		Grid_Switcher->SetActiveWidget(Grid_Consumables);
-		break;
-	case EInv_ItemCategory::Craftable:
-		Grid_Switcher->SetActiveWidget(Grid_Craftables);
-		break;
+		UE_LOG(LogInventory, Error, TEXT("ItemComponent doesn't have a valid Item Category."))
+		return nullptr;
+	case EInv_ItemCategory::Equippable: return Grid_Equippables;
+	case EInv_ItemCategory::Consumable: return Grid_Consumables;
+	case EInv_ItemCategory::Craftable: return Grid_Craftables;
 	}
-	
-	OnCategorySelected(Category);
+	return nullptr;
 }
 
