@@ -27,6 +27,9 @@ public:
 	template<typename T> requires std::derived_from<T, FInv_ItemFragment>
 	const T* GetFragment() const; 
 	
+	template<typename T> requires std::derived_from<T, FInv_ItemFragment>
+	T* GetMutableFragment(); 
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	EInv_ItemCategory ItemCategory { EInv_ItemCategory::None };
@@ -45,6 +48,20 @@ const T* FInv_ItemSpec::GetFragment() const
 	for (const TInstancedStruct<FInv_ItemFragment>& Fragment : Fragments)
 	{
 		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			return FragmentPtr;
+		}
+	}
+	
+	return nullptr;
+};
+
+template<typename T> requires std::derived_from<T, FInv_ItemFragment>
+T* FInv_ItemSpec::GetMutableFragment()
+{
+	for (TInstancedStruct<FInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (T* FragmentPtr = Fragment.GetMutablePtr<T>())
 		{
 			return FragmentPtr;
 		}

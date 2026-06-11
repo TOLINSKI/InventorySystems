@@ -24,10 +24,17 @@ public:
 	
 	FInv_ItemSpec GetItemSpec() const { return ItemSpec; }
 	
+	void PickUp();
+	
+	void PrintStackCount() const;
+	
 protected:
 	UPROPERTY(Replicated, EditAnywhere, Category="Inventory")
 	FInv_ItemSpec ItemSpec;
 	
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	FText PickupMessage;
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory", meta = (DisplayName = "Pick Up"))
+	void BP_PickedUp();
 };

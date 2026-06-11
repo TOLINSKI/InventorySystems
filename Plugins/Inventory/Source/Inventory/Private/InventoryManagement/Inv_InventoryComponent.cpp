@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Items/Inv_InventoryItem.h"
 #include "Items/Components/Inv_ItemComponent.h"
+#include "Items/Fragments/Inv_StackFragment.h"
 #include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/Inv_InventoryWidgetBase.h"
 
@@ -35,16 +36,16 @@ void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComponent)
 	Result.Item = InventoryArray.FindItemByTag(ItemComponent->GetItemSpec().GetItemTag());
 	if (Result.bIsStackable && Result.Item.IsValid())
 	{
-		Server_AddStacksToItem(ItemComponent, Result.StackCountToAdd);
+		Server_AddStacksToItem(ItemComponent, Result.StackCountToAdd, Result.Remainder);
 		OnStackChanged.Broadcast(Result);
 	}
 	else
 	{
-		Server_AddNewItem(ItemComponent, Result.StackCountToAdd);
+		Server_AddNewItem(ItemComponent, Result.StackCountToAdd, Result.bIsStackable ? Result.Remainder : 0);
 	}
 }
 
-void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount)
+void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder)
 {
 	UInv_InventoryItem* Item = InventoryArray.AddItem(ItemComponent);
 	Item->SetStackCount(StackCount);
@@ -55,16 +56,36 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 		OnItemAdded.Broadcast(Item);
 	}
 	
-	// TODO: Tell Item Component to destroy it's owner
+	if (Remainder == 0)
+	{
+		ItemComponent->PickUp();
+	}
+	else 
+	{
+		FInv_StackFragment* StackFragment = ItemComponent->GetItemSpec().GetMutableFragment<FInv_StackFragment>();
+		StackFragment->SetStackCount(Remainder);
+		ItemComponent->PrintStackCount();
+	}
 }
 
-void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount)
+void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder)
 {
 	const FGameplayTag& ItemTag = ItemComponent->GetItemSpec().GetItemTag();
 	UInv_InventoryItem* Item = InventoryArray.FindItemByTag(ItemTag);
 	if (!ensure(IsValid(Item))) return;
 	
 	Item->AddStackCount(StackCount);
+	
+	if (Remainder == 0)
+	{
+		ItemComponent->PickUp();
+	}
+	else 
+	{
+		FInv_StackFragment* StackFragment = ItemComponent->GetItemSpec().GetMutableFragment<FInv_StackFragment>();
+		StackFragment->SetStackCount(Remainder);
+		ItemComponent->PrintStackCount();
+	}
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
@@ -116,11 +137,11 @@ bool UInv_InventoryComponent::IsValidInventory() const
 	return OwningPlayer.IsValid() && IsValid(InventoryMenu);
 }
 
-
 void UInv_InventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (GetNetMode() == NM_DedicatedServer) return;
 	ConstructInventory();
 	CloseInventoryMenu();
 }

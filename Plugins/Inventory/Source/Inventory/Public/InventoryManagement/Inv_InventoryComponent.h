@@ -45,10 +45,10 @@ public:
 	void TryAddItem(UInv_ItemComponent* ItemComponent);
 	
 	UFUNCTION(Server, Reliable)
-	void Server_AddNewItem(UInv_ItemComponent* ItemComponent, int32 StackCount);
+	void Server_AddNewItem(UInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder);
 	
 	UFUNCTION(Server, Reliable)
-	void Server_AddStacksToItem(UInv_ItemComponent* ItemComponents,  int32 StackCount);
+	void Server_AddStacksToItem(UInv_ItemComponent* ItemComponents,  int32 StackCount, int32 Remainder);
 	
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void OpenInventoryMenu();
@@ -66,7 +66,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	bool IsValidInventory() const;
-
+	
 private:
 	TWeakObjectPtr<APlayerController> OwningPlayer;
 	

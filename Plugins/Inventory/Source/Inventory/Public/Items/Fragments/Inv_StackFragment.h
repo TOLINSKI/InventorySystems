@@ -16,6 +16,10 @@ public:
 	int32 GetStackCount() const { return StackCount; }
 	int32 GetMaxStackCount() const { return MaxStackCount; }
 	
+	void SetStackCount(int32 Count) { StackCount = Count;  }
+	void AddStackCount(int32 Count) { StackCount += Count; }
+	void SubStackCount(int32 Count) { StackCount -= Count; }
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	int32 StackCount { 1 };

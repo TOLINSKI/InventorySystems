@@ -3,6 +3,8 @@
 
 #include "Items/Components/Inv_ItemComponent.h"
 
+#include "Inventory.h"
+#include "Items/Fragments/Inv_StackFragment.h"
 #include "Net/UnrealNetwork.h"
 
 #define LOCTEXT_NAMESPACE "InvItemComponent"
@@ -19,6 +21,20 @@ void UInv_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ThisClass, ItemSpec);
+}
+
+void UInv_ItemComponent::PickUp()
+{
+	BP_PickedUp();
+	GetOwner()->Destroy();
+}
+
+void UInv_ItemComponent::PrintStackCount() const
+{
+	if (const FInv_StackFragment* StackFragment = GetItemSpec().GetMutableFragment<FInv_StackFragment>())
+	{
+		UE_LOG(LogInventory, Display, TEXT("%s Stack Count: %d"), *GetOwner()->GetActorNameOrLabel(), StackFragment->GetStackCount());
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
