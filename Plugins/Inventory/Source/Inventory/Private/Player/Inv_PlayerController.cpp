@@ -90,20 +90,20 @@ void AInv_PlayerController::OnBeginTrackingActor(AActor* Actor)
 {
 	UInv_ItemComponent* ItemComp = Actor->FindComponentByClass<UInv_ItemComponent>();
 	if (!ensure(ItemComp)) return;
-		
 	HUDWidget->ShowItemMessage(ItemComp->GetPickupMessage());
+	
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
 	if (!ensure(IsValid(Highlightable))) return;
-		
 	IInv_Highlightable::Execute_Highlight(Highlightable);
 }
 
 void AInv_PlayerController::OnEndTrackingActor(AActor* Actor)
 {
 	HUDWidget->HideItemMessage();
-		
+	
+	if (!IsValid(Actor)) return;
+	
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
-	if (!ensure(IsValid(Highlightable))) return;
-		
+	if (!IsValid(Highlightable)) return;
 	IInv_Highlightable::Execute_UnHighlight(Highlightable);
 }

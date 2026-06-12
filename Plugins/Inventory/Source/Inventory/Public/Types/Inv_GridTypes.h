@@ -59,7 +59,7 @@ struct FInv_GridItem
 	
 	FInv_GridItem() = default;
 	
-	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 Index, const FIntPoint& InGridSpan, int32 InStackCount);
+	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex, const FIntPoint& InGridSpan, int32 InStackCount);
 	
 	void SetStackCount(const int32 Count) { StackCount = Count; }
 	
@@ -75,18 +75,41 @@ struct FInv_GridItem
 	
 	FIntPoint GetGridSpan() const { return GridSpan; }
 	
-	int32 GetIndex() const { return GridIndex; }
+	int32 GetArrayIndex() const { return ArrayIndex; }
 	
 private:
 	TWeakObjectPtr<UInv_InventoryItem> Item;
 	
-	TWeakObjectPtr<UInv_ItemWidget> ItemWidget;
+	UPROPERTY()
+	TObjectPtr<UInv_ItemWidget> ItemWidget;
 	
-	int32 GridIndex { INDEX_NONE };
+	int32 ArrayIndex { INDEX_NONE };
 	
 	FIntPoint GridSpan;
 	
 	int32 StackCount { 1 };
 };
 
+USTRUCT()
+struct FInv_GridItemGrabber
+{
+	GENERATED_BODY()
+	
+	FInv_GridItemGrabber() = default;
+	
+	bool IsGrabbing() const;
+	
+	void UpdateGrabbedItemPosition(const FVector2D& MousePosition) const;
+	
+	void StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition);
 
+	FInv_GridItem StopGrabbing();
+	
+	UUserWidget* GetWidget() const;
+	
+	FInv_GridItem GridItem {};
+	
+	FVector2D InitGrabPosition {};
+	
+	FVector2D InitWidgetPosition {};
+};

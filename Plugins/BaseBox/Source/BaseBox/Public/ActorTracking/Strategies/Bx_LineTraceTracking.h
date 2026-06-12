@@ -28,4 +28,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tracking")
 	bool bDrawDebug { false };
+	
+private:
+	UFUNCTION()
+	void OnCachedActorDestroyed(AActor* Actor);
 };

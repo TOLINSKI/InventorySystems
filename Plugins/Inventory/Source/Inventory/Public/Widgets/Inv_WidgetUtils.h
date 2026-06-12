@@ -17,6 +17,9 @@ class INVENTORY_API UInv_WidgetUtils : public UBlueprintFunctionLibrary
 public:
 	static int32 GridPositionToIndex(const FIntPoint& Position, const int32 Columns);
 	static FIntPoint IndexToGridPosition(const int32 Index, const int32 Columns);
+	static TSet<int32> GetOccupiedIndices(const int32 Index, const FIntPoint& Range2D, const int32 Columns);
+	static FVector2D GetWidgetPosition(UUserWidget* Widget);
+	static FVector2D GetWidgetCenter(UUserWidget* Widget);
 	
 	template<typename T, typename Predicate>
 	static void ForEach2D(TArray<T>& Array, const int32 Index, const FIntPoint& Range2D, int32 Columns, const Predicate& Pred);

@@ -2,21 +2,27 @@
 
 #include "Types/Inv_GridTypes.h"
 
+#include "Inventory.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
 #include "Items/Inv_InventoryItem.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Runtime/Engine/Internal/VT/VirtualTextureVisualizationData.h"
+#include "Widgets/Inv_WidgetUtils.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
-FInv_GridItem::FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 Index,
-	const FIntPoint& InGridSpan, int32 InStackCount)
+FInv_GridItem::FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex,
+                             const FIntPoint& InGridSpan, int32 InStackCount)
 : Item(InItem)
 , ItemWidget(InItemWidget)
-, GridIndex(Index)
+, ArrayIndex(InArrayIndex)
 , GridSpan(InGridSpan) 
 , StackCount(InStackCount)
 {}
 
 bool FInv_GridItem::IsIndexOccupied(const int32 Index) const
 {
-	return GridIndex == Index;
+	return ArrayIndex == Index;
 }
 
 UInv_InventoryItem* FInv_GridItem::GetItem() const
@@ -27,4 +33,68 @@ UInv_InventoryItem* FInv_GridItem::GetItem() const
 UInv_ItemWidget* FInv_GridItem::GetItemWidget() const
 {
 	return ItemWidget.Get();
+}
+
+bool FInv_GridItemGrabber::IsGrabbing() const
+{
+	return GetWidget() != nullptr;
+}
+
+void FInv_GridItemGrabber::UpdateGrabbedItemPosition(const FVector2D& MousePosition) const
+{
+	UInv_ItemWidget* Widget = GridItem.GetItemWidget();
+	const FVector2D Difference = (MousePosition - InitGrabPosition); 
+	const FVector2D NewWidgetPosition = InitWidgetPosition + Difference;
+	
+	Widget->SetPositionInViewport(NewWidgetPosition, false);
+	
+	// const FVector2D TestWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
+	
+	// UE_LOG(LogInventory, Display, TEXT("Init Grab Position: %s"), *InitGrabPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Init Widget Position: %s"), *InitWidgetPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
+	// UE_LOG(LogInventory, Display, TEXT("Current Grab Position: %s"), *MousePosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Current Widget Position: %s"), *NewWidgetPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Current Difference: %s"), *Difference.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
+	// UE_LOG(LogInventory, Display, TEXT("Test Widget Position: %s"), *TestWidgetPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("==========================================================="));
+	
+	// UInv_ItemWidget* Widget = GridItem.GetItemWidget();
+	// Widget->SetPositionInViewport(MousePosition, false);
+}
+
+void FInv_GridItemGrabber::StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
+{
+	GridItem = InGridItem;
+	InitGrabPosition = MouseCursorPosition;
+	
+	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
+	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
+	
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsolutePosition, PixelPosition, ViewportPosition);
+	
+	
+	InitWidgetPosition = ViewportPosition;
+	
+	Widget->RemoveFromParent();
+	Widget->AddToViewport();
+	UpdateGrabbedItemPosition(UWidgetLayoutLibrary::GetMousePositionOnViewport(Widget));
+}
+
+FInv_GridItem FInv_GridItemGrabber::StopGrabbing()
+{
+	FInv_GridItem GridItemCopy = GridItem;
+	GridItem = {};
+	InitGrabPosition = {};
+	InitWidgetPosition = {};
+	
+	return GridItemCopy;
+}
+
+UUserWidget* FInv_GridItemGrabber::GetWidget() const
+{
+	return GridItem.GetItemWidget();
 }

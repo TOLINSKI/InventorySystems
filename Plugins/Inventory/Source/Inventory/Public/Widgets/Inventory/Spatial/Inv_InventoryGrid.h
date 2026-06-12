@@ -30,14 +30,16 @@ class INVENTORY_API UInv_InventoryGrid : public UUserWidget
 	
 public:
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
+
+	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
 	
+protected:
 	virtual void NativePreConstruct() override;
 	
 	virtual void NativeOnInitialized() override;
 	
-	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
 	EInv_ItemCategory ItemCategory;
 	
@@ -78,16 +80,27 @@ private:
 	
 	void AddGridItem(const FInv_GridItem& GridItem);
 	
-	UFUNCTION()
 	void Stack(const FInv_SlotAvailability& SlotAvailability);
 	
 	UFUNCTION()
 	void AddItem(UInv_InventoryItem* Item);
 	
 	UFUNCTION()
-	void AddResult(const FInv_SlotAvailabilityResult& Result);	
+	void AddResult(const FInv_SlotAvailabilityResult& Result);
 	
-	bool IsIndexOccupied(int32 Index) const;
+	int32 GetItemWidgetIndex(const UUserWidget* ItemWidget);
+
+	UFUNCTION()
+	void OnItemClicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnItemBeginHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnItemEndHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
 	
 	bool CanFitRange(int32 Index, const FIntPoint& Range2D) const;
 	
@@ -97,11 +110,13 @@ private:
 	
 	UInv_InventoryItem* GetItemObjectAtIndex(int32 Index) const;
 	
-	const FInv_GridItem* GetGridItemAtIndex(int32 Index) const;
+	const FInv_GridItem* FindGridItemByIndex(int32 Index) const;
 	
-	FInv_GridItem* GetGridItemAtIndexMutable(int32 Index);
+	FInv_GridItem* FindMutableGridItemByIndex(int32 Index);
+	
+	FInv_GridItem* FindGridItemByWidget(const UUserWidget* ItemWidget);
 	
 	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
-
+	FInv_GridItemGrabber ItemGrabber;
 };

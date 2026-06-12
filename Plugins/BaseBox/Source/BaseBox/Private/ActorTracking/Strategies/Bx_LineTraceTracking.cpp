@@ -46,6 +46,8 @@ AActor* UBx_LineTraceTracking::TraceForActors()
 	
 	if (bIsHitActorRelevant)
 	{
+		HitActor->OnDestroyed.AddUniqueDynamic(this, &ThisClass::OnCachedActorDestroyed);
+		
 		OnBeginTrackingActor.ExecuteIfBound(HitActor);
 		
 		if (bDrawDebug)
@@ -59,6 +61,8 @@ AActor* UBx_LineTraceTracking::TraceForActors()
 	
 	if (CachedActor.IsValid())
 	{
+		CachedActor->OnDestroyed.RemoveAll(this);
+		
 		OnEndTrackingActor.ExecuteIfBound(CachedActor.Get());
 		
 		if (bDrawDebug)
@@ -73,3 +77,17 @@ AActor* UBx_LineTraceTracking::TraceForActors()
 	CachedActor = HitActor;
 	return HitActor;
 }
+
+void UBx_LineTraceTracking::OnCachedActorDestroyed(AActor* Actor)
+{
+	OnEndTrackingActor.ExecuteIfBound(Actor);
+		
+	if (bDrawDebug)
+	{
+		const FString Msg = FString::Printf(TEXT("Actor Trace Stopped Hitting: %s"), *Actor->GetActorNameOrLabel());
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Red, FString::Printf(TEXT("%s"), *Msg));
+		UE_LOG(LogBaseBoxPlugin, Display, TEXT("%s"), *Msg);
+	}
+}
+
