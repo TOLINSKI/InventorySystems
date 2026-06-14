@@ -10,25 +10,25 @@ void UInv_GridSlot::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 	
-	// Image_GridSlot->SetDesiredSizeOverride(SlotSize);
 	Image_GridSlot->SetBrush(Brush_Unoccupied);
-}
-
-void UInv_GridSlot::SetOccupied(bool bIsOccupied)
-{
-	if (bIsOccupied)
-	{
-		Image_GridSlot->SetBrush(Brush_Occupied);
-	}
-	else
-	{
-		Image_GridSlot->SetBrush(Brush_Unoccupied);
-	}
 }
 
 bool UInv_GridSlot::IsOccupied() const
 {
-	return Image_GridSlot->GetBrush() == Brush_Occupied;
+	const FSlateBrush& Brush = Image_GridSlot->GetBrush(); 
+	return Brush == Brush_Occupied || Brush == Brush_Disabled;
+}
+
+void UInv_GridSlot::SetGridSlotState(EInv_GridSlotState State)
+{
+	switch (State)
+	{
+	case EInv_GridSlotState::Occupied: Image_GridSlot->SetBrush(Brush_Occupied); break;
+	case EInv_GridSlotState::Unoccupied: Image_GridSlot->SetBrush(Brush_Unoccupied); break;
+	case EInv_GridSlotState::Disabled: Image_GridSlot->SetBrush(Brush_Disabled); break;
+	case EInv_GridSlotState::Selected: Image_GridSlot->SetBrush(Brush_Selected); break;
+	default: break;
+	}
 }
 
 void UInv_GridSlot::SetSlotSize(FIntPoint Size)

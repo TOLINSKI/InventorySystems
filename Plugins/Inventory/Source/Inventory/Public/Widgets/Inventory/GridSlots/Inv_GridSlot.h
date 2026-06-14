@@ -6,6 +6,15 @@
 #include "Blueprint/UserWidget.h"
 #include "Inv_GridSlot.generated.h"
 
+UENUM(BlueprintType)
+enum class EInv_GridSlotState : uint8
+{
+	Unoccupied,
+	Occupied,
+	Selected,
+	Disabled
+};
+
 class UWidgetSwitcher;
 class UImage;
 
@@ -17,14 +26,16 @@ class INVENTORY_API UInv_GridSlot : public UUserWidget
 {
 	GENERATED_BODY()
 
+protected:
 	virtual void NativePreConstruct() override;
 	
 public:
 	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
 	int32 GetArrayIndex() const { return ArrayIndex; }
 	
-	void SetOccupied(bool bIsOccupied);
 	bool IsOccupied() const;
+	
+	void SetGridSlotState(EInv_GridSlotState State);
 	
 	void SetSlotSize(FIntPoint Size);
 	

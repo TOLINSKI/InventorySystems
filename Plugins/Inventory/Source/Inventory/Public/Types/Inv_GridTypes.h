@@ -77,6 +77,8 @@ struct FInv_GridItem
 	
 	int32 GetArrayIndex() const { return ArrayIndex; }
 	
+	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
+	
 private:
 	TWeakObjectPtr<UInv_InventoryItem> Item;
 	
@@ -91,27 +93,51 @@ private:
 };
 
 USTRUCT()
-struct FInv_GridItemGrabber
+struct FInv_GrabbedQueryResult
 {
 	GENERATED_BODY()
 	
-	FInv_GridItemGrabber() = default;
+	bool HasFoundPossibleIndex() const;
+	
+	void ResetResult();
+	
+	int32 LastPossibleIndex { INDEX_NONE };
+	
+	FInv_GridItem GrabbedItem {};
+	
+	FInv_GridItem* StackableGridItem {};
+	
+	TArray<FInv_GridItem*> BlockingGridItems {};
+};
+
+USTRUCT()
+struct FInv_GrabbedQuery
+{
+	GENERATED_BODY()
+	
+	FInv_GrabbedQuery() = default;
 	
 	bool IsGrabbing() const;
 	
 	void UpdateGrabbedItemPosition(const FVector2D& MousePosition) const;
 	
 	void StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition);
+	
+	void ResetQuery();
 
-	FInv_GridItem StopGrabbing();
+	FInv_GrabbedQueryResult StopGrabbing();
 	
 	UUserWidget* GetWidget() const;
 	
-	FInv_GridItem GridItem {};
+	const FInv_GridItem& GetGridItem() const { return Result.GrabbedItem; } 
+	
+	FInv_GridItem& GetMutableGridItem() { return Result.GrabbedItem; } 
 	
 	FVector2D InitGrabPosition {};
 	
 	FVector2D InitWidgetPosition {};
+	
+	FInv_GrabbedQueryResult Result {};
 };
 
 UENUM()

@@ -6,12 +6,12 @@
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Blueprint/UserWidget.h"
 
-int32 UInv_WidgetUtils::GridPositionToIndex(const FIntPoint& Position, const int32 Columns)
+int32 UInv_WidgetUtils::GridCoordinatesToIndex(const FIntPoint& Position, const int32 Columns)
 {
 	return Position.Y * Columns + Position.X;
 }
 
-FIntPoint UInv_WidgetUtils::IndexToGridPosition(const int32 Index, const int32 Columns)
+FIntPoint UInv_WidgetUtils::IndexToGridCoordinates(const int32 Index, const int32 Columns)
 {
 	return {Index % Columns, Index / Columns};
 }
@@ -21,13 +21,13 @@ TSet<int32> UInv_WidgetUtils::GetOccupiedIndices(const int32 Index, const FIntPo
 	TSet<int32> Indices;
 	Indices.Add(Index);
 	
-	const FIntPoint GridPosition = IndexToGridPosition(Index, Columns);
+	const FIntPoint GridCoordinates = IndexToGridCoordinates(Index, Columns);
 	for (int32 i = 1; i < Range2D.Y; ++i)
 	{
 		for (int32 j = 1; j < Range2D.X; ++j)
 		{
-			const FIntPoint ThisGridPosition = GridPosition + FIntPoint(i, j);
-			Indices.Add(GridPositionToIndex(ThisGridPosition, Columns));
+			const FIntPoint ThisGridCoordinates = GridCoordinates + FIntPoint(i, j);
+			Indices.Add(GridCoordinatesToIndex(ThisGridCoordinates, Columns));
 		}
 	}
 	

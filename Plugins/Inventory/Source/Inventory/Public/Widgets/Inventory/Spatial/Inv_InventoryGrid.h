@@ -116,15 +116,23 @@ private:
 	
 	FInv_GridItem* FindGridItemByWidget(const UUserWidget* ItemWidget);
 	
+	FInv_GridItem* FindOccupyingGridItem(int32 Index);
+	
 	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
-	FInv_GridItemGrabber ItemGrabber;
+	FInv_GrabbedQuery GrabbedQuery;
 	
 	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget) const;
 	
-	FIntPoint CalculateGridPosition(FVector2D WidgetPosition);
+	FIntPoint ViewportPositionToGridCoordinate(const FVector2D& Position);
 
-	UInv_GridSlot* GetGridSlotByQuadrant(const FVector2D& WidgetPosition, EInv_GridSlotQuadrant Quadrant);
+	FIntPoint GetGridCoordinatesByQuadrant(const FVector2D& WidgetCenter, const FIntPoint& GridSpan, EInv_GridSlotQuadrant Quadrant);
 	
 	UInv_GridSlot* FindGridSlotByIndex(int32 Index);
+	
+	UInv_GridSlot* FindGridSlotByCoordinates(const FIntPoint& GridCoordinates);
+	
+	void OccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
+	
+	void UnoccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
 };
