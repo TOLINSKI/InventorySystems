@@ -45,6 +45,19 @@ void UInv_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 	if (ItemGrabber.IsGrabbing())
 	{
 		ItemGrabber.UpdateGrabbedItemPosition(UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer()));
+		const EInv_GridSlotQuadrant GridSlotQuadrant = GetGridSlotQuadrant(ItemGrabber.GetWidget());
+		UE_LOG(LogInventory, Display, TEXT("Grid slot quadrant: %s"), *UEnum::GetValueAsString(GridSlotQuadrant));
+		
+		/////
+		for (UInv_GridSlot* GridSlot : GridSlots)
+		{
+			GridSlot->SetOccupied(false);
+		}
+		if (UInv_GridSlot* FoundSlot = GetGridSlotByQuadrant(UInv_WidgetUtils::GetWidgetPosition(ItemGrabber.GetWidget()), GridSlotQuadrant))
+		{
+			FoundSlot->SetOccupied(true);
+		}
+		/////
 	}
 }
 
@@ -287,7 +300,7 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 		Visited.Append(Occupied);
 		if (Occupied.Num() > 0) continue;
 		
-		TSet<int32> ToOccupy = OccupyIndices(i, GridSpan);
+		TSet<int32> ToOccupy = FindIndecesToOccupy(i, GridSpan);
 		Visited.Append(ToOccupy);
 		
 		if (Result.bIsStackable)
@@ -315,6 +328,58 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 	return Result;
 }
 
+EInv_GridSlotQuadrant UInv_InventoryGrid::GetGridSlotQuadrant(UUserWidget* Widget) const
+{
+	EInv_GridSlotQuadrant Result {EInv_GridSlotQuadrant::None};
+	
+	const FVector2D WidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
+	if (!UInv_WidgetUtils::IsPositionBoundByWidget(GridPanel_Items, WidgetPosition)  
+		&& !UInv_WidgetUtils::IsPositionBoundByWidget(GridPanel_Items, UInv_WidgetUtils::GetWidgetBottomRight(Widget)))
+	{
+		return Result;
+	}
+	
+	const FVector2D GridPosition = UInv_WidgetUtils::GetWidgetPosition(GridPanel_Items);
+	const float GridSlotLocalX = FMath::Fmod(WidgetPosition.X - GridPosition.X, GridSlotSize.X);
+	const float GridSlotLocalY = FMath::Fmod(WidgetPosition.Y - GridPosition.Y, GridSlotSize.Y);
+	
+	bool bIsTop = GridSlotLocalY < GridSlotSize.Y / 2.f;
+	bool bIsLeft = GridSlotLocalX < GridSlotSize.X / 2.f; 
+	
+	if (bIsTop && bIsLeft) Result = EInv_GridSlotQuadrant::TopLeft;
+	if (bIsTop && !bIsLeft) Result = EInv_GridSlotQuadrant::TopRight;
+	if (!bIsTop && bIsLeft) Result = EInv_GridSlotQuadrant::BottomLeft;
+	if (!bIsTop && !bIsLeft) Result = EInv_GridSlotQuadrant::BottomRight;
+	return Result;
+}
+
+FIntPoint UInv_InventoryGrid::CalculateGridPosition(const FVector2D WidgetPosition)
+{
+	const FVector2D GridTopLeft = UInv_WidgetUtils::GetWidgetPosition(GridPanel_Items);
+	return {
+		static_cast<int32>(FMath::FloorToInt((WidgetPosition.X - GridTopLeft.X) / GridSlotSize.X)),
+		static_cast<int32>(FMath::FloorToInt((WidgetPosition.Y - GridTopLeft.Y) / GridSlotSize.Y))
+	};
+}
+
+UInv_GridSlot* UInv_InventoryGrid::GetGridSlotByQuadrant(const FVector2D& WidgetPosition, EInv_GridSlotQuadrant Quadrant)
+{
+	const FIntPoint GridPosition = CalculateGridPosition(WidgetPosition);
+	int32 Index = UInv_WidgetUtils::GridPositionToIndex(GridPosition, Columns);
+	
+	return FindGridSlotByIndex(Index);
+}
+
+UInv_GridSlot* UInv_InventoryGrid::FindGridSlotByIndex(int32 Index)
+{
+	for (auto& GridSlot: GridSlots)
+	{
+		if (GridSlot->GetArrayIndex() == Index) return GridSlot;
+	}
+	
+	return nullptr;
+}
+
 bool UInv_InventoryGrid::CanFitRange(int32 Index, const FIntPoint& Range2D) const
 {
 	const FIntPoint GridPosition = UInv_WidgetUtils::IndexToGridPosition(Index, Columns);
@@ -338,7 +403,7 @@ TSet<int32> UInv_InventoryGrid::FindOccupiedIndices(int32 Index, const FIntPoint
 	return Occupied;
 }
 
-TSet<int32> UInv_InventoryGrid::OccupyIndices(int32 Index, const FIntPoint& Range2D) const
+TSet<int32> UInv_InventoryGrid::FindIndecesToOccupy(int32 Index, const FIntPoint& Range2D) const
 {
 	TSet<int32> Occupied;
 	

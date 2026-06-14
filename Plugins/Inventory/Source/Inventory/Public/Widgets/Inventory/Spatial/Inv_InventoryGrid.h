@@ -106,7 +106,7 @@ private:
 	
 	TSet<int32> FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const;
 	
-	TSet<int32> OccupyIndices(int32 Index, const FIntPoint& Range2D) const;
+	TSet<int32> FindIndecesToOccupy(int32 Index, const FIntPoint& Range2D) const;
 	
 	UInv_InventoryItem* GetItemObjectAtIndex(int32 Index) const;
 	
@@ -119,4 +119,12 @@ private:
 	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
 	FInv_GridItemGrabber ItemGrabber;
+	
+	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget) const;
+	
+	FIntPoint CalculateGridPosition(FVector2D WidgetPosition);
+
+	UInv_GridSlot* GetGridSlotByQuadrant(const FVector2D& WidgetPosition, EInv_GridSlotQuadrant Quadrant);
+	
+	UInv_GridSlot* FindGridSlotByIndex(int32 Index);
 };

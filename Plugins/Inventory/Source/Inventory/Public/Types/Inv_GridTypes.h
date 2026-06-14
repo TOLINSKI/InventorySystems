@@ -113,3 +113,13 @@ struct FInv_GridItemGrabber
 	
 	FVector2D InitWidgetPosition {};
 };
+
+UENUM()
+enum class EInv_GridSlotQuadrant
+{
+	None,
+	TopLeft,
+	TopRight,
+	BottomLeft,
+	BottomRight,
+};

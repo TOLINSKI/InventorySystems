@@ -34,21 +34,50 @@ TSet<int32> UInv_WidgetUtils::GetOccupiedIndices(const int32 Index, const FIntPo
 	return Indices;
 }
 
-FVector2D UInv_WidgetUtils::GetWidgetPosition(UUserWidget* Widget)
+FVector2D UInv_WidgetUtils::GetWidgetPosition(UWidget* Widget)
 {
-	const FGeometry Geometry = Widget->GetCachedGeometry();
+	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
 	FVector2D PixelPosition;
 	FVector2D ViewportPosition;
-	USlateBlueprintLibrary::LocalToViewport(Widget, Geometry, USlateBlueprintLibrary::GetLocalTopLeft(Geometry), PixelPosition, ViewportPosition);
+	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsolutePosition, PixelPosition, ViewportPosition);
 	return ViewportPosition;
 }
 
-FVector2D UInv_WidgetUtils::GetWidgetCenter(UUserWidget* Widget)
+FVector2D UInv_WidgetUtils::GetWidgetCenter(UWidget* Widget)
 {
-	FVector2D ViewportTopLeft = GetWidgetPosition(Widget);
-	const FGeometry Geometry = Widget->GetCachedGeometry();
-	const FVector2D WidgetSize = USlateBlueprintLibrary::GetLocalSize(Geometry);
-	const FVector2D WidgetCenter = ViewportTopLeft + WidgetSize / 2.f;
-	return WidgetCenter;
+	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
+	const FVector2D AbsoluteSize = Widget->GetCachedGeometry().GetAbsoluteSize();
+	const FVector2D AbsoluteCenter = AbsolutePosition + AbsoluteSize / 2.f;
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsoluteCenter, PixelPosition, ViewportPosition);
+	return ViewportPosition;
+}
+
+FVector2D UInv_WidgetUtils::GetWidgetBottomRight(UWidget* Widget)
+{
+	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
+	const FVector2D AbsoluteSize = Widget->GetCachedGeometry().GetAbsoluteSize();
+	const FVector2D AbsoluteBottomRight = AbsolutePosition + AbsoluteSize;
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsoluteBottomRight, PixelPosition, ViewportPosition);
+	return ViewportPosition;
+}
+
+bool UInv_WidgetUtils::IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition)
+{
+	const FVector2D WidgetTopLeft = GetWidgetPosition(Widget);
+	const FVector2D WidgetBottomRight = GetWidgetBottomRight(Widget);
+	return ViewportPosition.ComponentwiseAllGreaterOrEqual(WidgetTopLeft) && ViewportPosition.ComponentwiseAllLessOrEqual(WidgetBottomRight);
+}
+
+bool UInv_WidgetUtils::IsWidgetBoundByWidget(UWidget* BiggerWidget, UWidget* SmallerWidget)
+{
+	const FVector2D SmallerWidgetTopLeft = GetWidgetPosition(SmallerWidget);
+	const FVector2D SmallerWidgetBottomRight = GetWidgetBottomRight(SmallerWidget);
+	const FVector2D BiggerWidgetTopLeft = GetWidgetPosition(BiggerWidget);
+	const FVector2D BiggerWidgetBottomRight = GetWidgetBottomRight(BiggerWidget);
+	return SmallerWidgetTopLeft.ComponentwiseAllGreaterOrEqual(BiggerWidgetTopLeft) && SmallerWidgetBottomRight.ComponentwiseAllLessOrEqual(BiggerWidgetBottomRight);
 }
 

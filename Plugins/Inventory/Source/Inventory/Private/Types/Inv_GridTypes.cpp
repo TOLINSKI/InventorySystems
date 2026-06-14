@@ -45,11 +45,9 @@ void FInv_GridItemGrabber::UpdateGrabbedItemPosition(const FVector2D& MousePosit
 	UInv_ItemWidget* Widget = GridItem.GetItemWidget();
 	const FVector2D Difference = (MousePosition - InitGrabPosition); 
 	const FVector2D NewWidgetPosition = InitWidgetPosition + Difference;
-	
 	Widget->SetPositionInViewport(NewWidgetPosition, false);
 	
 	// const FVector2D TestWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
-	
 	// UE_LOG(LogInventory, Display, TEXT("Init Grab Position: %s"), *InitGrabPosition.ToString());
 	// UE_LOG(LogInventory, Display, TEXT("Init Widget Position: %s"), *InitWidgetPosition.ToString());
 	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
@@ -59,9 +57,6 @@ void FInv_GridItemGrabber::UpdateGrabbedItemPosition(const FVector2D& MousePosit
 	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
 	// UE_LOG(LogInventory, Display, TEXT("Test Widget Position: %s"), *TestWidgetPosition.ToString());
 	// UE_LOG(LogInventory, Display, TEXT("==========================================================="));
-	
-	// UInv_ItemWidget* Widget = GridItem.GetItemWidget();
-	// Widget->SetPositionInViewport(MousePosition, false);
 }
 
 void FInv_GridItemGrabber::StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
@@ -70,14 +65,7 @@ void FInv_GridItemGrabber::StartGrabbing(const FInv_GridItem& InGridItem, const 
 	InitGrabPosition = MouseCursorPosition;
 	
 	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
-	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
-	
-	FVector2D PixelPosition;
-	FVector2D ViewportPosition;
-	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsolutePosition, PixelPosition, ViewportPosition);
-	
-	
-	InitWidgetPosition = ViewportPosition;
+	InitWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
 	
 	Widget->RemoveFromParent();
 	Widget->AddToViewport();
