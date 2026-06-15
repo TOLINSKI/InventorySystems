@@ -23,9 +23,10 @@ class INVENTORY_API UInv_SpatialInventory : public UInv_InventoryWidgetBase
 	
 protected:
 	virtual void NativeOnInitialized() override;
+
+	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
 public:
-	
 	// Begin UInv_InventoryWidgetBase Interface
 	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const override;
 	// End UInv_InventoryWidgetBase Interface
@@ -36,6 +37,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCategorySelected(EInv_ItemCategory Category);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	bool ShouldDropItem();
+	
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidgetSwitcher> Grid_Switcher;
@@ -50,4 +54,6 @@ private:
 	TObjectPtr<UInv_InventoryGrid> Grid_Craftables;
 	
 	UInv_InventoryGrid* GetGridByCategory(EInv_ItemCategory Category) const;
+	
+	void OnGridUnclicked();
 };

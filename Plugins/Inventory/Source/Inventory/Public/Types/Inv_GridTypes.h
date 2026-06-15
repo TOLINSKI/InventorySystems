@@ -154,6 +154,8 @@ struct FInv_GridGrabQuery
 	
 	void SetStackableGridItem(FInv_GridItem* GridItem) { StackableGridItem = GridItem; }
 	
+	void ResetIndex();
+	
 private:
 	bool bIsGrabbing { false };
 	
@@ -194,6 +196,8 @@ struct FInv_GridPopUp
 	UInv_ItemPopUp* GetWidget() const { return PopUpWidget; }
 	
 	int32 GetIndex() const { return TargetGridItem->GetIndex(); }
+	
+	FInv_GridItem* GetGridItem() const { return TargetGridItem; }
 	
 private:
 	UPROPERTY()

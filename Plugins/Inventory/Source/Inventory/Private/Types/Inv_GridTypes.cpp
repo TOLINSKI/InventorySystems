@@ -127,6 +127,11 @@ UUserWidget* FInv_GridGrabQuery::GetWidget() const
 	return GetGridItem()->GetItemWidget();
 }
 
+void FInv_GridGrabQuery::ResetIndex()
+{
+	SetPossibleIndex(GetGridItem()->GetIndex());
+}
+
 void FInv_GridPopUp::Init(FInv_GridItem& GridItem, UInv_ItemPopUp* PopUpMenu)
 {
 	if (IsValid(PopUpMenu))

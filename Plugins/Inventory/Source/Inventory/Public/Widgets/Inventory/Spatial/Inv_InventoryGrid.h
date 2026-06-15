@@ -21,6 +21,8 @@ class UInv_InventoryItem;
 class UInv_GridSlot;
 class UGridPanel;
 
+DECLARE_DELEGATE(FInv_GridEvent);
+
 /**
  * 
  */
@@ -33,6 +35,10 @@ public:
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 
 	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
+	
+	FInv_GridEvent OnUnClicked;
+	
+	void DropLastGrabbedItem();
 	
 protected:
 	virtual void NativePreConstruct() override;
@@ -79,8 +85,8 @@ private:
 	FIntPoint GridSlotSize {64, 64};
 	
 	void ReverseLastTickGridSlotEffects();
-	
-	bool UpdateGrabbedQuery();
+
+	void UpdateGrabbedQuery();
 	
 	bool IsMatchingCategory(UInv_InventoryItem* Item);
 	
@@ -158,7 +164,8 @@ private:
 	
 	UFUNCTION()
 	void OnPopUpMenuUseAction(int32 ConsumeAmount);
-	
+	void DropGridItem(FInv_GridItem* GridItem, int32 DropAmount);
+
 	UFUNCTION()
 	void OnPopUpMenuDropAction(int32 DropAmount);
 	// End Grid Pop Up Menu

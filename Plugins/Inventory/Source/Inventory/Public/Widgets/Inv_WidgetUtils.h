@@ -22,9 +22,12 @@ public:
 	static FVector2D GetWidgetPosition(UWidget* Widget);
 	static FVector2D GetWidgetCenter(UWidget* Widget);
 	static FVector2D GetWidgetBottomRight(UWidget* Widget);
-	static bool IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition);
-	static bool IsWidgetBoundByWidget(UWidget* BiggerWidget, UWidget* SmallerWidget);
 	
+	UFUNCTION(BlueprintCallable, Category="Inventory Widget Utils")
+	static bool IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition);
+
+	UFUNCTION(BlueprintCallable, Category="Inventory Widget Utils")
+	static bool IsWidgetBoundByWidget(UWidget* BiggerWidget, UWidget* SmallerWidget);
 	
 	template<typename T, typename Predicate>
 	static void ForEach2D(TArray<T>& Array, const int32 Index, const FIntPoint& Range2D, int32 Columns, const Predicate& Pred);

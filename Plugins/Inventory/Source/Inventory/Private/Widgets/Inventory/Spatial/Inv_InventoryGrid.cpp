@@ -21,6 +21,22 @@
 #include "Widgets/Item/Inv_ItemPopUp.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
+void UInv_InventoryGrid::DropLastGrabbedItem()
+{
+	FInv_GridItem* GridItem = GrabbedQuery.GetGridItem();
+	const int32 DropAmount = GridItem->GetStackCount();
+	GridItem->SubtractStackCount(DropAmount);
+	
+	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	check(IsValid(InventoryComponent));
+	InventoryComponent->Server_DropItem(GridItem->GetItem(), DropAmount, true);
+	
+	if (GridItem->GetStackCount() <= 0)
+	{
+		RemoveGridItem(*GridItem);
+	}
+}
+
 void UInv_InventoryGrid::NativePreConstruct()
 {
 	Super::NativePreConstruct();
@@ -72,7 +88,7 @@ void UInv_InventoryGrid::ReverseLastTickGridSlotEffects()
 	}
 }
 
-bool UInv_InventoryGrid::UpdateGrabbedQuery()
+void UInv_InventoryGrid::UpdateGrabbedQuery()
 {
 	ReverseLastTickGridSlotEffects();
 	
@@ -83,12 +99,32 @@ bool UInv_InventoryGrid::UpdateGrabbedQuery()
 	const EInv_GridSlotQuadrant GridSlotQuadrant = GetGridSlotQuadrant(GrabbedGridItem->GetItemWidget());
 	UE_LOG(LogInventory, Display, TEXT("Grid slot quadrant: %s"), *UEnum::GetValueAsString(GridSlotQuadrant));
 
+	// Item is held outside the grid, return
+	if (GridSlotQuadrant == EInv_GridSlotQuadrant::None)
+	{
+		GrabbedQuery.SetPossibleIndex(GrabbedGridItem->GetIndex());
+		OccupyGridSlotsInRange(GrabbedGridItem->GetIndex(), GrabbedGridItem->GetGridSpan());
+		
+		// if (SpatialInventory->IsHovered())
+		// {
+		//
+		// }
+		// else
+		// {
+		// 	GrabbedQuery.SetPossibleIndex(INDEX_NONE);
+		// 	UnoccupyGridSlotsInRange(GrabbedGridItem->GetIndex(), GrabbedGridItem->GetGridSpan());
+		// }
+		return;
+	}
+	
 	// Grid coordinates
 	const FIntPoint GrabbedGridSpan = GrabbedGridItem->GetGridSpan();
 	const FVector2D GrabbedCenter = UInv_WidgetUtils::GetWidgetCenter(GrabbedGridItem->GetItemWidget());
 	const FIntPoint GridCoordinates = GetGridCoordinatesByQuadrant(GrabbedCenter, GrabbedGridSpan, GridSlotQuadrant); \
+	
+	// Part of the item slides out of the grid, return
 	const int32 Index = UInv_WidgetUtils::GridCoordinatesToIndex(GridCoordinates, Columns);
-	if (!CanFitRange(Index, GrabbedGridSpan)) return true;
+	if (!CanFitRange(Index, GrabbedGridSpan)) return;
 
 	// No collisions? set possible index and return
 	TSet<int32> OccupiedIndices = FindOccupiedIndices(Index, GrabbedGridSpan);
@@ -96,7 +132,7 @@ bool UInv_InventoryGrid::UpdateGrabbedQuery()
 	{
 		OccupyGridSlotsInRange(Index, GrabbedQuery.GetGridItem()->GetGridSpan());
 		GrabbedQuery.SetPossibleIndex(Index);
-		return true;
+		return;
 	}
 
 	// Stacking - Check if occupied indices belong to a stackable item
@@ -147,7 +183,6 @@ bool UInv_InventoryGrid::UpdateGrabbedQuery()
 			GridSlot->SetGridSlotState(EInv_GridSlotState::Disabled);
 		});
 	}
-	return false;
 }
 
 FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const
@@ -375,6 +410,8 @@ void UInv_InventoryGrid::OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPoi
 			SetCursor(EMouseCursor::Type::GrabHand);
 		}
 	}
+	
+	OnUnClicked.ExecuteIfBound();
 }
 
 void UInv_InventoryGrid::OnItemBeginHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent)
@@ -533,6 +570,8 @@ FIntPoint UInv_InventoryGrid::GetGridCoordinatesByQuadrant(const FVector2D& Widg
 	switch (Quadrant)
 	{
 	case EInv_GridSlotQuadrant::None:
+		StartingCoordinates.X = -1.f;
+		StartingCoordinates.Y = -1.f;
 		break;
 	case EInv_GridSlotQuadrant::TopLeft:
 		StartingCoordinates.X = GridCoordinates.X - FMath::FloorToInt(0.5f * GridSpan.X);
@@ -754,10 +793,15 @@ void UInv_InventoryGrid::OnPopUpMenuUseAction(int32 ConsumeAmount)
 
 void UInv_InventoryGrid::OnPopUpMenuDropAction(int32 DropAmount)
 {
-	const int32 ItemIndex = PopUpMenu.GetIndex();
-	FInv_GridItem* GridItem = FindGridItem(ItemIndex);
-	GridItem->SubtractStackCount(DropAmount);
 	PopUpMenu.GetWidget()->SetVisibility(ESlateVisibility::Collapsed);
+	
+	FInv_GridItem* GridItem = PopUpMenu.GetGridItem();
+	DropGridItem(GridItem, DropAmount);
+}
+
+void UInv_InventoryGrid::DropGridItem(FInv_GridItem* GridItem, int32 DropAmount)
+{
+	GridItem->SubtractStackCount(DropAmount);
 	
 	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	check(IsValid(InventoryComponent));
