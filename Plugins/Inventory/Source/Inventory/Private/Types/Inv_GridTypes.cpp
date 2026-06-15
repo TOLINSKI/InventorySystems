@@ -6,17 +6,39 @@
 #include "Items/Inv_InventoryItem.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Items/Fragments/Inv_StackFragment.h"
 #include "Widgets/Inv_WidgetUtils.h"
+#include "Widgets/Item/Inv_ItemPopUp.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
 FInv_GridItem::FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex,
-                             const FIntPoint& InGridSpan, int32 InStackCount)
+                             const FIntPoint& InGridSpan, int32 InStackCount, int32 InMaxStackCount)
 : Item(InItem)
 , ItemWidget(InItemWidget)
 , ArrayIndex(InArrayIndex)
 , GridSpan(InGridSpan) 
 , StackCount(InStackCount)
+, MaxStackCount(InMaxStackCount)
 {}
+
+FInv_GridItem::~FInv_GridItem()
+{
+	if (IsValid(ItemWidget))
+	{
+		ItemWidget->RemoveFromParent();
+		ItemWidget = nullptr;
+	}
+}
+
+bool FInv_GridItem::operator==(const FInv_GridItem& Other) const
+{
+	return Other.GetIndex() == GetIndex();
+}
+
+void FInv_GridItem::UpdateStackCountUI() const
+{
+	GetItemWidget()->StackCountChanged(StackCount);
+}
 
 bool FInv_GridItem::IsIndexOccupied(const int32 Index) const
 {
@@ -33,30 +55,24 @@ UInv_ItemWidget* FInv_GridItem::GetItemWidget() const
 	return ItemWidget.Get();
 }
 
-bool FInv_GrabbedQueryResult::HasFoundPossibleIndex() const
+bool FInv_GridItem::IsStackable() const
 {
-	return LastPossibleIndex != INDEX_NONE;
+	return GetItem()->GetItemSpec().GetFragment<FInv_StackFragment>() != nullptr;
 }
 
-void FInv_GrabbedQueryResult::ResetResult()
+bool FInv_GridItem::IsConsumable() const
 {
-	LastPossibleIndex = INDEX_NONE;
-	
-	GrabbedItem = {};
-	
-	StackableGridItem = {};
-	
-	BlockingGridItems = {};
+	return GetItem()->GetItemSpec().GetItemCategory() == EInv_ItemCategory::Consumable;
 }
 
-bool FInv_GrabbedQuery::IsGrabbing() const
+FGameplayTag FInv_GridItem::GetItemTag() const
 {
-	return GetWidget() != nullptr;
+	return GetItem()->GetItemTag();
 }
 
-void FInv_GrabbedQuery::UpdateGrabbedItemPosition(const FVector2D& MousePosition) const
+void FInv_GridGrabQuery::UpdateGrabbedItemPosition(const FVector2D& MousePosition) const
 {
-	UInv_ItemWidget* Widget = GetGridItem().GetItemWidget();
+	UInv_ItemWidget* Widget = GetGridItem()->GetItemWidget();
 	const FVector2D Difference = (MousePosition - InitGrabPosition); 
 	const FVector2D NewWidgetPosition = InitWidgetPosition + Difference;
 	Widget->SetPositionInViewport(NewWidgetPosition, false);
@@ -73,10 +89,11 @@ void FInv_GrabbedQuery::UpdateGrabbedItemPosition(const FVector2D& MousePosition
 	UE_LOG(LogInventory, Display, TEXT("==========================================================="));
 }
 
-void FInv_GrabbedQuery::StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
+void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
 {
-	Result.ResetResult();
-	Result.GrabbedItem = InGridItem;
+	ResetQuery();
+	bIsGrabbing = true;
+	GrabbedItem = &InGridItem;
 	InitGrabPosition = MouseCursorPosition;
 	
 	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
@@ -87,24 +104,40 @@ void FInv_GrabbedQuery::StartGrabbing(const FInv_GridItem& InGridItem, const FVe
 	UpdateGrabbedItemPosition(UWidgetLayoutLibrary::GetMousePositionOnViewport(Widget));
 }
 
-void FInv_GrabbedQuery::ResetQuery()
+void FInv_GridGrabQuery::ResetQuery()
 {
-	Result.ResetResult();
+	LastPossibleIndex = INDEX_NONE;
+	
+	GrabbedItem = nullptr;
+	
+	StackableGridItem = nullptr;
+	
+	BlockingGridItems.Empty();
+	
+	bIsGrabbing = false;
 }
 
-FInv_GrabbedQueryResult FInv_GrabbedQuery::StopGrabbing()
+void FInv_GridGrabQuery::StopGrabbing()
 {
-	FInv_GrabbedQueryResult QueryCopy = Result;
-	
-	InitGrabPosition = {};
-	InitWidgetPosition = {};
-	ResetQuery();
-	
-	return QueryCopy;
+	bIsGrabbing = false;
 }
 
-UUserWidget* FInv_GrabbedQuery::GetWidget() const
+UUserWidget* FInv_GridGrabQuery::GetWidget() const
 {
-	return GetGridItem().GetItemWidget();
+	return GetGridItem()->GetItemWidget();
+}
+
+void FInv_GridPopUp::Init(FInv_GridItem& GridItem, UInv_ItemPopUp* PopUpMenu)
+{
+	if (IsValid(PopUpMenu))
+	{
+		PopUpWidget = PopUpMenu;
+	}
+	else
+	{
+		check(IsValid(PopUpWidget));
+	}
+	
+	TargetGridItem = &GridItem;
 }
 

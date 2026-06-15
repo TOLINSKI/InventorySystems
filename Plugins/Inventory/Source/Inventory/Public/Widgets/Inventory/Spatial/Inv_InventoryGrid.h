@@ -12,6 +12,7 @@
 
 #include "Inv_InventoryGrid.generated.h"
 
+class UInv_ItemPopUp;
 class UInv_ItemComponent;
 class UGridSlot;
 class UInv_ItemWidget;
@@ -37,7 +38,7 @@ protected:
 	virtual void NativePreConstruct() override;
 	
 	virtual void NativeOnInitialized() override;
-	
+
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
@@ -54,6 +55,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
 	TSubclassOf<UInv_GridSlot> GridSlotClass;	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
+	TSubclassOf<UInv_ItemPopUp> PopUpMenuClass;
 	
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void ConstructGrid();
@@ -74,11 +78,15 @@ private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	FIntPoint GridSlotSize {64, 64};
 	
+	void ReverseLastTickGridSlotEffects();
+	
+	bool UpdateGrabbedQuery();
+	
 	bool IsMatchingCategory(UInv_InventoryItem* Item);
 	
 	UInv_ItemWidget* CreateItemWidget(const FInv_GridFragment* GridFragment, const FInv_IconFragment* IconFragment);
 	
-	void AddGridItem(const FInv_GridItem& GridItem);
+	void PlaceOnGrid(const FInv_GridItem& GridItem);
 	
 	void Stack(const FInv_SlotAvailability& SlotAvailability);
 	
@@ -92,7 +100,8 @@ private:
 
 	UFUNCTION()
 	void OnItemClicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-	
+	void RemoveGridItem(const FInv_GridItem& GridItem);
+
 	UFUNCTION()
 	void OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
 	
@@ -112,15 +121,17 @@ private:
 	
 	const FInv_GridItem* FindGridItemByIndex(int32 Index) const;
 	
-	FInv_GridItem* FindMutableGridItemByIndex(int32 Index);
+	FInv_GridItem* FindGridItem(int32 Index);
 	
-	FInv_GridItem* FindGridItemByWidget(const UUserWidget* ItemWidget);
+	FInv_GridItem* FindGridItem(const UUserWidget* ItemWidget);
 	
-	FInv_GridItem* FindOccupyingGridItem(int32 Index);
+	FInv_GridItem* FindGridItem(UInv_GridSlot* GridSlot);
+	
+	FInv_GridItem* FindOverlappingGridItem(int32 Index);
 	
 	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
-	FInv_GrabbedQuery GrabbedQuery;
+	FInv_GridGrabQuery GrabbedQuery;
 	
 	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget) const;
 	
@@ -135,4 +146,20 @@ private:
 	void OccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
 	
 	void UnoccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
+	
+	// Begin Grid Pop Up Menu
+	UPROPERTY()
+	FInv_GridPopUp PopUpMenu;
+	
+	void CreateGridPopUp(FInv_GridItem& GridItem);
+	
+	UFUNCTION()
+	void OnPopUpMenuSplitAction(int32 SplitAmount);
+	
+	UFUNCTION()
+	void OnPopUpMenuUseAction(int32 ConsumeAmount);
+	
+	UFUNCTION()
+	void OnPopUpMenuDropAction(int32 DropAmount);
+	// End Grid Pop Up Menu
 };

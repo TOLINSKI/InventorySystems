@@ -6,10 +6,7 @@
 
 FReply UInv_ItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-	{
-		OnItemClicked.Broadcast(this, InMouseEvent);
-	}
+	OnItemClicked.Broadcast(this, InMouseEvent);
 	
 	return FReply::Handled();
 }

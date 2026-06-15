@@ -31,7 +31,7 @@ void UInv_ItemComponent::PickUp()
 
 void UInv_ItemComponent::PrintStackCount() const
 {
-	if (const FInv_StackFragment* StackFragment = GetItemSpec().GetMutableFragment<FInv_StackFragment>())
+	if (const FInv_StackFragment* StackFragment = GetItemSpec().GetFragment<FInv_StackFragment>())
 	{
 		UE_LOG(LogInventory, Display, TEXT("%s Stack Count: %d"), *GetOwner()->GetActorNameOrLabel(), StackFragment->GetStackCount());
 	}

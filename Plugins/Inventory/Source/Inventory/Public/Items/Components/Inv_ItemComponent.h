@@ -22,7 +22,9 @@ public:
 
 	FText GetPickupMessage() const { return PickupMessage; }
 	
-	FInv_ItemSpec GetItemSpec() const { return ItemSpec; }
+	const FInv_ItemSpec& GetItemSpec() const { return ItemSpec; }
+	
+	FInv_ItemSpec& GetMutableItemSpec() { return ItemSpec; }
 	
 	void PickUp();
 	

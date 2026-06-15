@@ -50,6 +50,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_AddStacksToItem(UInv_ItemComponent* ItemComponents,  int32 StackCount, int32 Remainder);
 	
+	UFUNCTION(Server, Reliable)
+	void Server_DropItem(UInv_InventoryItem* Item, int32 AmountToRemove, bool bSpawnDroppedItem = true);
+	
+	void SpawnDroppedItem(UInv_InventoryItem* Item, int32 StackCount) const;
+	
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void OpenInventoryMenu();
 	

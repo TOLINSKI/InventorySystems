@@ -20,8 +20,11 @@ struct INVENTORY_API FInv_ItemSpec
 
 public:
 	UInv_InventoryItem* CreateItem(UObject* Outer) const;
+
+	void SpawnItem(const UObject* WorldContextObject, const FVector& Location, const FRotator& Rotation, int32 StackCount = 1) const;
 	
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
+	
 	FGameplayTag GetItemTag() const { return ItemTag; }
 
 	template<typename T> requires std::derived_from<T, FInv_ItemFragment>
@@ -31,7 +34,10 @@ public:
 	T* GetMutableFragment(); 
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Inventory")
+	TSubclassOf<AActor> ItemActorClass;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Inventory")
 	EInv_ItemCategory ItemCategory { EInv_ItemCategory::None };
 	
 	UPROPERTY(EditAnywhere, Category="Inventory", meta = (ExcludeBaseStruct))

@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h" 
-#include "VisualizeTexture.h"
+#include "GameplayTagContainer.h"
 
 #include "Inv_GridTypes.generated.h"
 
+struct FGameplayTag;
+class UInv_ItemPopUp;
 class UInv_ItemWidget;
 class UInv_InventoryItem;
 
@@ -20,6 +22,11 @@ struct FInv_SlotAvailability
 	FInv_SlotAvailability(int32 ItemIndex, int32 StackCount, bool bItemExists) 
 	: ItemIndex(ItemIndex)
 	, StackCount(StackCount)
+	, bItemExists(bItemExists)
+	{}
+	
+	FInv_SlotAvailability(int32 ItemIndex, bool bItemExists) 
+	: ItemIndex(ItemIndex)
 	, bItemExists(bItemExists)
 	{}
 	
@@ -59,13 +66,25 @@ struct FInv_GridItem
 	
 	FInv_GridItem() = default;
 	
-	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex, const FIntPoint& InGridSpan, int32 InStackCount);
+	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex, const FIntPoint& InGridSpan, int32 InStackCount, int32 InMaxStackCount);
 	
-	void SetStackCount(const int32 Count) { StackCount = Count; }
+	~FInv_GridItem();
 	
-	int32 AddStackCount(const int32 Count) { StackCount += Count; return StackCount; }
+	bool operator ==(const FInv_GridItem& Other) const;
+	
+	void SetStackCount(const int32 Count) { StackCount = Count; UpdateStackCountUI(); }
+	
+	int32 AddStackCount(const int32 Count) { StackCount += Count; UpdateStackCountUI(); return StackCount; }
+
+	int32 SubtractStackCount(const int32 Count) { StackCount -= Count; UpdateStackCountUI(); return StackCount; }
 	
 	int32 GetStackCount() const { return StackCount; }
+
+	int32 GetStackableAmount() const { return FMath::Max(MaxStackCount - StackCount, 0); }
+	
+	int32 GetMaxStackCount() const { return MaxStackCount; }
+	
+	bool HasRoomToStack() const { return MaxStackCount > StackCount; }
 	
 	bool IsIndexOccupied(const int32 Index) const;
 	
@@ -75,9 +94,15 @@ struct FInv_GridItem
 	
 	FIntPoint GetGridSpan() const { return GridSpan; }
 	
-	int32 GetArrayIndex() const { return ArrayIndex; }
+	int32 GetIndex() const { return ArrayIndex; }
 	
-	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
+	void ResetArrayIndex(int32 Index) { ArrayIndex = Index; }
+	
+	bool IsStackable() const;
+	
+	bool IsConsumable() const;
+	
+	FGameplayTag GetItemTag() const;
 	
 private:
 	TWeakObjectPtr<UInv_InventoryItem> Item;
@@ -90,54 +115,61 @@ private:
 	FIntPoint GridSpan;
 	
 	int32 StackCount { 1 };
+	
+	int32 MaxStackCount { 1 };
+	
+	void UpdateStackCountUI() const;
 };
 
 USTRUCT()
-struct FInv_GrabbedQueryResult
+struct FInv_GridGrabQuery
 {
 	GENERATED_BODY()
 	
-	bool HasFoundPossibleIndex() const;
+	FInv_GridGrabQuery() = default;
 	
-	void ResetResult();
-	
-	int32 LastPossibleIndex { INDEX_NONE };
-	
-	FInv_GridItem GrabbedItem {};
-	
-	FInv_GridItem* StackableGridItem {};
-	
-	TArray<FInv_GridItem*> BlockingGridItems {};
-};
-
-USTRUCT()
-struct FInv_GrabbedQuery
-{
-	GENERATED_BODY()
-	
-	FInv_GrabbedQuery() = default;
-	
-	bool IsGrabbing() const;
+	bool IsGrabbing() const { return bIsGrabbing; }
 	
 	void UpdateGrabbedItemPosition(const FVector2D& MousePosition) const;
 	
-	void StartGrabbing(const FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition);
+	void StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition);
 	
 	void ResetQuery();
 
-	FInv_GrabbedQueryResult StopGrabbing();
+	TArray<FInv_GridItem*>& GetBlockingGridItems() { return BlockingGridItems;}
+
+	void StopGrabbing();
 	
 	UUserWidget* GetWidget() const;
 	
-	const FInv_GridItem& GetGridItem() const { return Result.GrabbedItem; } 
+	FInv_GridItem* GetGridItem() const { return GrabbedItem; } 
 	
-	FInv_GridItem& GetMutableGridItem() { return Result.GrabbedItem; } 
+	FInv_GridItem* GetStackableGridItem() const { return StackableGridItem; }
+	
+	bool HasFoundPossibleIndex() const { return LastPossibleIndex != INDEX_NONE; }
+	
+	int32 GetPossibleIndex() const { return LastPossibleIndex; }
+	
+	void SetPossibleIndex(int32 Index) { LastPossibleIndex = Index; }
+	
+	void SetStackableGridItem(FInv_GridItem* GridItem) { StackableGridItem = GridItem; }
+	
+private:
+	bool bIsGrabbing { false };
 	
 	FVector2D InitGrabPosition {};
 	
 	FVector2D InitWidgetPosition {};
 	
-	FInv_GrabbedQueryResult Result {};
+	int32 LastPossibleIndex { INDEX_NONE };
+	
+	FInv_GridItem* GrabbedItem {};
+	
+	FInv_GridItem* StackableGridItem {};
+	
+	int32 StackableAmount { 0 };
+	
+	TArray<FInv_GridItem*> BlockingGridItems {};
 };
 
 UENUM()
@@ -148,4 +180,24 @@ enum class EInv_GridSlotQuadrant
 	TopRight,
 	BottomLeft,
 	BottomRight,
+};
+
+USTRUCT()
+struct FInv_GridPopUp
+{
+	GENERATED_BODY()
+
+	FInv_GridPopUp() = default;
+	
+	void Init(FInv_GridItem& GridItem, UInv_ItemPopUp* PopUpMenu = nullptr);
+	
+	UInv_ItemPopUp* GetWidget() const { return PopUpWidget; }
+	
+	int32 GetIndex() const { return TargetGridItem->GetIndex(); }
+	
+private:
+	UPROPERTY()
+	TObjectPtr<UInv_ItemPopUp> PopUpWidget { nullptr };
+	
+	FInv_GridItem* TargetGridItem { nullptr };
 };

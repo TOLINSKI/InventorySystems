@@ -26,11 +26,13 @@ public:
 	
 	const FInv_ItemSpec& GetItemSpec() const { return ItemSpec.Get<FInv_ItemSpec>(); }
 	
-	FInv_ItemSpec& GetItemSpecMutable() { return ItemSpec.GetMutable<FInv_ItemSpec>(); }
+	FInv_ItemSpec& GetMutableItemSpec() { return ItemSpec.GetMutable<FInv_ItemSpec>(); }
 	
 	void SetStackCount(int32 Count) { TotalStackCount = Count; }
 	
 	void AddStackCount(int32 Count) { TotalStackCount += Count; }
+	
+	int32 GetStackCount() const { return TotalStackCount; }
 	
 	FGameplayTag GetItemTag() const;
 	

@@ -15,6 +15,7 @@ UInv_InventoryComponent::UInv_InventoryComponent() : InventoryArray(this)
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
+	bHideMouseCursorOnClosed = true;
 }
 
 void UInv_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -62,7 +63,7 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 	}
 	else 
 	{
-		FInv_StackFragment* StackFragment = ItemComponent->GetItemSpec().GetMutableFragment<FInv_StackFragment>();
+		FInv_StackFragment* StackFragment = ItemComponent->GetMutableItemSpec().GetMutableFragment<FInv_StackFragment>();
 		StackFragment->SetStackCount(Remainder);
 		ItemComponent->PrintStackCount();
 	}
@@ -82,10 +83,36 @@ void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemCom
 	}
 	else 
 	{
-		FInv_StackFragment* StackFragment = ItemComponent->GetItemSpec().GetMutableFragment<FInv_StackFragment>();
+		FInv_StackFragment* StackFragment = ItemComponent->GetMutableItemSpec().GetMutableFragment<FInv_StackFragment>();
 		StackFragment->SetStackCount(Remainder);
 		ItemComponent->PrintStackCount();
 	}
+}
+
+void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem* Item, int32 AmountToRemove, bool bSpawnDroppedItem)
+{
+	const int32 StackCount = Item->GetStackCount();
+	Item->SetStackCount(FMath::Max(StackCount - AmountToRemove, 0));
+	if (Item->GetStackCount() == 0)
+	{
+		InventoryArray.RemoveItem(Item);
+	}
+	if (bSpawnDroppedItem)
+	{
+		SpawnDroppedItem(Item, AmountToRemove);
+	}
+}
+
+void UInv_InventoryComponent::SpawnDroppedItem(UInv_InventoryItem* Item, int32 StackCount) const
+{
+	const FVector PawnLocation = OwningPlayer->GetPawn()->GetActorLocation();
+	const FVector Direction = OwningPlayer->GetPawn()->GetActorForwardVector();
+	const FVector SpawnOrigin = PawnLocation + 300.f * Direction;
+	
+	FVector RandomSpawnLocation = SpawnOrigin + FMath::VRand() * FMath::RandRange(-200.f, 200.f);
+	RandomSpawnLocation.Z = PawnLocation.Z - 90.f;
+	
+	Item->GetItemSpec().SpawnItem(this, RandomSpawnLocation, FRotator::ZeroRotator, StackCount);
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
@@ -140,17 +167,17 @@ bool UInv_InventoryComponent::IsValidInventory() const
 void UInv_InventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (GetNetMode() == NM_DedicatedServer) return;
+
+	OwningPlayer = Cast<APlayerController>(GetOwner());
+	checkf(OwningPlayer.IsValid(), TEXT("Inventory Component should have a Player Controller as Owner."))
+	if (!OwningPlayer->IsLocalController()) return;
+
 	ConstructInventory();
 	CloseInventoryMenu();
 }
 
 void UInv_InventoryComponent::ConstructInventory()
 {
-	OwningPlayer = Cast<APlayerController>(GetOwner());
-	if (!ensureMsgf(OwningPlayer.IsValid(), TEXT("Inventory Component must be owned by a Player Controller"))) return;
-	
 	InventoryMenu = CreateWidget<UInv_InventoryWidgetBase>(OwningPlayer.Get(), InventoryMenuClass);
 	InventoryMenu->AddToViewport();
 }

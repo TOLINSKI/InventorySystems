@@ -84,6 +84,7 @@ void FInv_InventoryFastArray::RemoveItem(UInv_InventoryItem* Item)
 		if (It->Get() == Item)
 		{
 			It.RemoveCurrent();
+			MarkArrayDirty();
 		}
 	}
 }

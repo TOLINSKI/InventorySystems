@@ -18,13 +18,13 @@ public:
 	
 	void SetStackCount(int32 Count) { StackCount = Count;  }
 	void AddStackCount(int32 Count) { StackCount += Count; }
-	void SubStackCount(int32 Count) { StackCount -= Count; }
+	void SubtractStackCount(int32 Count) { StackCount -= Count; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	int32 StackCount { 1 };
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Inventory")
 	int32 MaxStackCount { 1 };
 };
 
