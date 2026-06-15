@@ -12,6 +12,7 @@
 UInv_ItemComponent::UInv_ItemComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 	
 	PickupMessage = LOCTEXT("PickupMessage", "Pick Up");
 }
