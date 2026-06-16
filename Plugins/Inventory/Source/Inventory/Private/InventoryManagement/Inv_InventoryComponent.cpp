@@ -3,10 +3,12 @@
 
 #include "InventoryManagement/Inv_InventoryComponent.h"
 
+#include "Inventory.h"
 #include "Blueprint/UserWidget.h"
 #include "Items/Inv_InventoryItem.h"
 #include "Items/Components/Inv_ItemComponent.h"
 #include "Items/Fragments/Inv_StackFragment.h"
+#include "Items/Fragments/UsableFragments/Inv_UsableFragment.h"
 #include "Net/UnrealNetwork.h"
 #include "Widgets/Inventory/Inv_InventoryWidgetBase.h"
 
@@ -100,6 +102,21 @@ void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem*
 	if (bSpawnDroppedItem)
 	{
 		SpawnDroppedItem(Item, AmountToRemove);
+	}
+}
+
+void UInv_InventoryComponent::Server_UseItem_Implementation(UInv_InventoryItem* Item, int32 Amount)
+{
+	const int32 StackCount = Item->GetStackCount();
+	Item->SetStackCount(FMath::Max(StackCount - Amount, 0));
+	if (Item->GetStackCount() == 0)
+	{
+		InventoryArray.RemoveItem(Item);
+	}
+	
+	if (FInv_UsableFragment* UsableFrag = Item->GetMutableItemSpec().GetMutableFragment<FInv_UsableFragment>())
+	{
+		UsableFrag->OnUsed(OwningPlayer.Get());
 	}
 }
 

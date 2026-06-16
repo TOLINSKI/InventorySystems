@@ -24,8 +24,6 @@ class INVENTORY_API UInv_SpatialInventory : public UInv_InventoryWidgetBase
 protected:
 	virtual void NativeOnInitialized() override;
 
-	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	
 public:
 	// Begin UInv_InventoryWidgetBase Interface
 	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const override;
@@ -55,5 +53,7 @@ private:
 	
 	UInv_InventoryGrid* GetGridByCategory(EInv_ItemCategory Category) const;
 	
-	void OnGridUnclicked();
+	UInv_InventoryGrid* GetActiveGrid() const;
+	
+	void OnReleasedGridItem();
 };

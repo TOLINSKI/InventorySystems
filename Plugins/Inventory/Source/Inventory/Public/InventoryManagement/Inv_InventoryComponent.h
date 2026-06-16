@@ -53,6 +53,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(UInv_InventoryItem* Item, int32 AmountToRemove, bool bSpawnDroppedItem = true);
 	
+	UFUNCTION(Server, Reliable)
+	void Server_UseItem(UInv_InventoryItem* Item, int32 Amount);
+	
 	void SpawnDroppedItem(UInv_InventoryItem* Item, int32 StackCount) const;
 	
 	UFUNCTION(BlueprintCallable, Category="Inventory")

@@ -9,7 +9,7 @@
 #include "Inv_PlayerController.generated.h"
 
 class UInv_InventoryComponent;
-class UBx_ActorTrackingComponent;
+class UBxActorTrackingComponent;
 class UInv_HUDWidget;
 class UInputMappingContext;
 /**
@@ -46,7 +46,7 @@ protected:
 	TSubclassOf<UInv_HUDWidget> HUDWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category ="Inv Gameplay")
-	TObjectPtr<UBx_ActorTrackingComponent> ActorTracking;
+	TObjectPtr<UBxActorTrackingComponent> ActorTracking;
 	
 private:
 	void SetupHUDWidget();

@@ -12,21 +12,11 @@ void UInv_SpatialInventory::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	Grid_Equippables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnGridUnclicked);
-	Grid_Consumables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnGridUnclicked);
-	Grid_Craftables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnGridUnclicked);
+	Grid_Equippables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
+	Grid_Consumables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
+	Grid_Craftables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
 	
 	SwitchGridCategory(EInv_ItemCategory::Equippable);
-}
-
-FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
-	{
-		
-	}
-	
-	return FReply::Handled();
 }
 
 FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const
@@ -57,14 +47,16 @@ UInv_InventoryGrid* UInv_SpatialInventory::GetGridByCategory(EInv_ItemCategory C
 	return nullptr;
 }
 
-void UInv_SpatialInventory::OnGridUnclicked()
+UInv_InventoryGrid* UInv_SpatialInventory::GetActiveGrid() const
 {
-	UInv_InventoryGrid* ActiveGrid = Cast<UInv_InventoryGrid>(Grid_Switcher->GetActiveWidget());
-	check(IsValid(ActiveGrid));
-	
+	return Cast<UInv_InventoryGrid>(Grid_Switcher->GetActiveWidget());
+}
+
+void UInv_SpatialInventory::OnReleasedGridItem()
+{
 	if (ShouldDropItem())
 	{
-		ActiveGrid->DropLastGrabbedItem();
+		GetActiveGrid()->DropLastGrabbedItem();
 	}
 }
 

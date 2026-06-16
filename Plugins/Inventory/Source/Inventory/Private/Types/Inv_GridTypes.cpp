@@ -95,6 +95,7 @@ void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2
 	bIsGrabbing = true;
 	GrabbedItem = &InGridItem;
 	InitGrabPosition = MouseCursorPosition;
+	LastPossibleIndex = GrabbedItem->GetIndex();
 	
 	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
 	InitWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);

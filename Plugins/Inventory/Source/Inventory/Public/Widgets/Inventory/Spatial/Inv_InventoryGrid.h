@@ -23,9 +23,6 @@ class UGridPanel;
 
 DECLARE_DELEGATE(FInv_GridEvent);
 
-/**
- * 
- */
 UCLASS()
 class INVENTORY_API UInv_InventoryGrid : public UUserWidget
 {
@@ -163,10 +160,13 @@ private:
 	void OnPopUpMenuSplitAction(int32 SplitAmount);
 	
 	UFUNCTION()
-	void OnPopUpMenuUseAction(int32 ConsumeAmount);
-	void DropGridItem(FInv_GridItem* GridItem, int32 DropAmount);
-
+	void OnPopUpMenuUseAction(int32 UsedAmount);
+	
 	UFUNCTION()
 	void OnPopUpMenuDropAction(int32 DropAmount);
+	
+	void DropGridItem(FInv_GridItem* GridItem, int32 Amount);
+
+	void UseGridItem(FInv_GridItem* GridItem, int32 Amount);
 	// End Grid Pop Up Menu
 };

@@ -21,22 +21,6 @@
 #include "Widgets/Item/Inv_ItemPopUp.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
-void UInv_InventoryGrid::DropLastGrabbedItem()
-{
-	FInv_GridItem* GridItem = GrabbedQuery.GetGridItem();
-	const int32 DropAmount = GridItem->GetStackCount();
-	GridItem->SubtractStackCount(DropAmount);
-	
-	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
-	check(IsValid(InventoryComponent));
-	InventoryComponent->Server_DropItem(GridItem->GetItem(), DropAmount, true);
-	
-	if (GridItem->GetStackCount() <= 0)
-	{
-		RemoveGridItem(*GridItem);
-	}
-}
-
 void UInv_InventoryGrid::NativePreConstruct()
 {
 	Super::NativePreConstruct();
@@ -68,11 +52,8 @@ void UInv_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 void UInv_InventoryGrid::ReverseLastTickGridSlotEffects()
 {
 	// Unoccupy last tick possible grid slots
-	if (GrabbedQuery.HasFoundPossibleIndex())
-	{
-		const int32 LastPossibleIndex = GrabbedQuery.GetPossibleIndex(); 
-		UnoccupyGridSlotsInRange(LastPossibleIndex, GrabbedQuery.GetGridItem()->GetGridSpan());
-	}
+	const int32 LastPossibleIndex = GrabbedQuery.GetPossibleIndex(); 
+	UnoccupyGridSlotsInRange(LastPossibleIndex, GrabbedQuery.GetGridItem()->GetGridSpan());
 	
 	// Occupy last tick blocking grid slots
 	for (const auto& BlockingGridItem : GrabbedQuery.GetBlockingGridItems())
@@ -102,18 +83,7 @@ void UInv_InventoryGrid::UpdateGrabbedQuery()
 	// Item is held outside the grid, return
 	if (GridSlotQuadrant == EInv_GridSlotQuadrant::None)
 	{
-		GrabbedQuery.SetPossibleIndex(GrabbedGridItem->GetIndex());
-		OccupyGridSlotsInRange(GrabbedGridItem->GetIndex(), GrabbedGridItem->GetGridSpan());
-		
-		// if (SpatialInventory->IsHovered())
-		// {
-		//
-		// }
-		// else
-		// {
-		// 	GrabbedQuery.SetPossibleIndex(INDEX_NONE);
-		// 	UnoccupyGridSlotsInRange(GrabbedGridItem->GetIndex(), GrabbedGridItem->GetGridSpan());
-		// }
+		OccupyGridSlotsInRange(GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
 		return;
 	}
 	
@@ -382,10 +352,7 @@ void UInv_InventoryGrid::OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPoi
 
 		if (GrabbedGridItem->GetStackCount() == 0)
 		{
-			if (GrabbedQuery.HasFoundPossibleIndex())
-			{
-				UnoccupyGridSlotsInRange(GrabbedGridItem->GetIndex(), GrabbedGridItem->GetGridSpan());
-			}
+			UnoccupyGridSlotsInRange(GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
 			
 			RemoveGridItem(*GrabbedGridItem);
 			
@@ -783,12 +750,12 @@ void UInv_InventoryGrid::OnPopUpMenuSplitAction(int32 SplitAmount)
 	PopUpMenu.GetWidget()->SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UInv_InventoryGrid::OnPopUpMenuUseAction(int32 ConsumeAmount)
+void UInv_InventoryGrid::OnPopUpMenuUseAction(int32 UsedAmount)
 {
-	const int32 ItemIndex = PopUpMenu.GetIndex();
-	FInv_GridItem* GridItem = FindGridItem(ItemIndex);
-	
 	PopUpMenu.GetWidget()->SetVisibility(ESlateVisibility::Collapsed);
+	
+	FInv_GridItem* GridItem = PopUpMenu.GetGridItem();
+	UseGridItem(GridItem, 1);
 }
 
 void UInv_InventoryGrid::OnPopUpMenuDropAction(int32 DropAmount)
@@ -799,8 +766,38 @@ void UInv_InventoryGrid::OnPopUpMenuDropAction(int32 DropAmount)
 	DropGridItem(GridItem, DropAmount);
 }
 
-void UInv_InventoryGrid::DropGridItem(FInv_GridItem* GridItem, int32 DropAmount)
+void UInv_InventoryGrid::DropGridItem(FInv_GridItem* GridItem, int32 Amount)
 {
+	GridItem->SubtractStackCount(Amount);
+	
+	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	check(IsValid(InventoryComponent));
+	InventoryComponent->Server_DropItem(GridItem->GetItem(), Amount, true);
+	
+	if (GridItem->GetStackCount() <= 0)
+	{
+		RemoveGridItem(*GridItem);
+	}
+}
+
+void UInv_InventoryGrid::UseGridItem(FInv_GridItem* GridItem, int32 Amount)
+{
+	GridItem->SubtractStackCount(Amount);
+	
+	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	check(IsValid(InventoryComponent));
+	InventoryComponent->Server_UseItem(GridItem->GetItem(), Amount);
+	
+	if (GridItem->GetStackCount() <= 0)
+	{
+		RemoveGridItem(*GridItem);
+	}
+}
+
+void UInv_InventoryGrid::DropLastGrabbedItem()
+{
+	FInv_GridItem* GridItem = GrabbedQuery.GetGridItem();
+	const int32 DropAmount = GridItem->GetStackCount();
 	GridItem->SubtractStackCount(DropAmount);
 	
 	UInv_InventoryComponent* InventoryComponent = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());

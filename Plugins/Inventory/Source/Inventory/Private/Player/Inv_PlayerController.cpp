@@ -10,7 +10,7 @@
 #include "Widgets/HUD/Inv_HUDWidget.h"
 #include "Interaction/Inv_HighlightableStaticMeshComponent.h"
 #include "Items/Components/Inv_ItemComponent.h"
-#include "ActorTracking/Bx_ActorTrackingComponent.h"
+#include "ActorTracking/BxActorTrackingComponent.h"
 #include "InventoryManagement/Inv_InventoryComponent.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
@@ -20,7 +20,7 @@ AInv_PlayerController::AInv_PlayerController()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	
-	ActorTracking = CreateDefaultSubobject<UBx_ActorTrackingComponent>("ActorTracker");
+	ActorTracking = CreateDefaultSubobject<UBxActorTrackingComponent>("ActorTracker");
 }
 
 void AInv_PlayerController::BeginPlay()

@@ -146,8 +146,6 @@ struct FInv_GridGrabQuery
 	
 	FInv_GridItem* GetStackableGridItem() const { return StackableGridItem; }
 	
-	bool HasFoundPossibleIndex() const { return LastPossibleIndex != INDEX_NONE; }
-	
 	int32 GetPossibleIndex() const { return LastPossibleIndex; }
 	
 	void SetPossibleIndex(int32 Index) { LastPossibleIndex = Index; }
