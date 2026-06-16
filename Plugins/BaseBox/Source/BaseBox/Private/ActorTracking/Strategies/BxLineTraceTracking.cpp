@@ -1,7 +1,7 @@
 ﻿// Copyright Chaos Box Games 2026, All rights reserved.
 
 
-#include "ActorTracking/Strategies/BxLineTracking.h"
+#include "ActorTracking/Strategies/BxLineTraceTracking.h"
 
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
@@ -11,7 +11,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 
-const FBxActorTrackingResult& FBxLineTracking::TraceForActors(const UObject* WorldContextObject)
+const FBxActorTrackingResult& FBxLineTraceTracking::TraceForActors(const UObject* WorldContextObject)
 {
 	if (!IsValid(GEngine) || !IsValid(GEngine->GameViewport)) return TrackingResult;
 	

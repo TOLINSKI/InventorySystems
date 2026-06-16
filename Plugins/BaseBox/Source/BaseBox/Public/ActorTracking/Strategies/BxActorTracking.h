@@ -11,11 +11,12 @@ class AActor;
 
 struct FBxActorTrackingResult
 {
-	TWeakObjectPtr<AActor> LastActor { nullptr };
 	TWeakObjectPtr<AActor> ThisActor { nullptr };
+	TWeakObjectPtr<AActor> LastActor { nullptr };
 	bool bChanged { false };
 };
 
+/** Base Interface class for actor tracking strategies */
 USTRUCT(BlueprintType)
 struct BASEBOX_API FBxActorTracking
 {
@@ -34,6 +35,20 @@ public:
 	
 	AActor* GetTrackedActor() const;
 
+	/** 
+	 * This function  must be overriden by child strategies
+	 * 
+	 * **ATTENTION**
+	 * This function must return UpdateTrackingResult(AActor* HitActor)!!!
+	 * 
+	 * For example:
+	 * FBxActorTrackingResult& TraceForActors(const UObject* WorldContextObject)
+	 * {
+	 *		..Do stuff..
+	 *		AActor* HitActor = HitResult.GetActor();
+	 *		return UpdateTrackingResult(HitActor).
+	 * }
+	 */
 	virtual const FBxActorTrackingResult& TraceForActors(const UObject* WorldContextObject) { return UpdateTrackingResult(nullptr); }
 	
 protected:

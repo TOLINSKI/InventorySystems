@@ -1,7 +1,7 @@
 ﻿// Copyright Chaos Box Games 2026, All rights reserved.
 
 
-#include "ActorTracking/Strategies/BxSphereTracking.h"
+#include "ActorTracking/Strategies/BxSphereOverlapTracking.h"
 
 #include "Engine/Engine.h"
 #include "Engine/OverlapResult.h"
@@ -11,7 +11,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 
-const FBxActorTrackingResult& FBxSphereTracking::TraceForActors(const UObject* WorldContextObject)
+const FBxActorTrackingResult& FBxSphereOverlapTracking::TraceForActors(const UObject* WorldContextObject)
 {
 	if (!IsValid(GEngine) || !IsValid(GEngine->GameViewport)) return TrackingResult;
 	
