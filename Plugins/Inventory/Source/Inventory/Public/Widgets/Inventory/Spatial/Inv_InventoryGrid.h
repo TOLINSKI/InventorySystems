@@ -4,14 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Items/Fragments/Inv_GridFragment.h"
-#include "Items/Fragments/Inv_IconFragment.h"
-#include "Types/Inv_GridTypes.h"
 
+#include "Types/Inv_GridTypes.h"
 #include "Types/Inv_InventoryTypes.h"
 
 #include "Inv_InventoryGrid.generated.h"
 
+class UInv_ItemDescription;
+struct FInv_IconFragment;
+struct FInv_GridFragment;
 class UInv_ItemPopUp;
 class UInv_ItemComponent;
 class UGridSlot;
@@ -62,6 +63,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
 	TSubclassOf<UInv_ItemPopUp> PopUpMenuClass;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory|Item Description")
+	TSubclassOf<UInv_ItemDescription> PopUpDescriptionClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory|Item Description")
+	float ShowDescriptionDelay { 1.f };
+	
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void ConstructGrid();
 	
@@ -89,9 +96,13 @@ private:
 	
 	UInv_ItemWidget* CreateItemWidget(const FInv_GridFragment* GridFragment, const FInv_IconFragment* IconFragment);
 	
+	void SetGridSlotsStateInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D);
+	
 	void PlaceOnGrid(const FInv_GridItem& GridItem);
 	
 	void Stack(const FInv_SlotAvailability& SlotAvailability);
+	
+	void RemoveGridItem(const FInv_GridItem& GridItem);
 	
 	UFUNCTION()
 	void AddItem(UInv_InventoryItem* Item);
@@ -103,11 +114,11 @@ private:
 
 	UFUNCTION()
 	void OnItemClicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-	void RemoveGridItem(const FInv_GridItem& GridItem);
 
 	UFUNCTION()
 	void OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-	
+	void HidePopUpDescription();
+
 	UFUNCTION()
 	void OnItemBeginHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
 	
@@ -146,15 +157,12 @@ private:
 	
 	UInv_GridSlot* FindGridSlotByCoordinates(const FIntPoint& GridCoordinates);
 	
-	void OccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
-	
-	void UnoccupyGridSlotsInRange(int32 Index, const FIntPoint& Range2D);
 	
 	// Begin Grid Pop Up Menu
 	UPROPERTY()
 	FInv_GridPopUp PopUpMenu;
 	
-	void CreateGridPopUp(FInv_GridItem& GridItem);
+	void CreatePopUpMenu(FInv_GridItem& GridItem);
 	
 	UFUNCTION()
 	void OnPopUpMenuSplitAction(int32 SplitAmount);
@@ -169,4 +177,13 @@ private:
 
 	void UseGridItem(FInv_GridItem* GridItem, int32 Amount);
 	// End Grid Pop Up Menu
+	
+	// Begin Grid Pop Up Description
+	UPROPERTY()
+	FInv_GridPopUp PopUpDescription;
+	
+	void CreatePopUpDescription(FInv_GridItem& GridItem);
+	
+	FTimerHandle DescriptionTimer;
+	// End Grid Pop Up Description
 };

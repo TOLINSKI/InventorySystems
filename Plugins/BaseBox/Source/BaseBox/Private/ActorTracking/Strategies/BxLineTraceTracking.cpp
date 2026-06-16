@@ -31,7 +31,7 @@ const FBxActorTrackingResult& FBxLineTraceTracking::TraceForActors(const UObject
 	PlayerController->GetWorld()->LineTraceSingleByChannel(HitResult, CameraCenter, TraceEnd, TraceChannel);
 	AActor* HitActor = HitResult.GetActor();
 	
-	if (IsActorRelevant(HitActor))
+	if (bDrawDebug && IsActorRelevant(HitActor))
 	{
 		DrawDebugPoint(PlayerController->GetWorld(), HitResult.ImpactPoint, 20.f, FColor::Green, false, -1.f, 1);
 	}

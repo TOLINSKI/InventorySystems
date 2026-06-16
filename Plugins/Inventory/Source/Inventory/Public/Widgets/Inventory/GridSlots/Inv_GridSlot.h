@@ -4,16 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Types/Inv_GridTypes.h"
 #include "Inv_GridSlot.generated.h"
-
-UENUM(BlueprintType)
-enum class EInv_GridSlotState : uint8
-{
-	Unoccupied,
-	Occupied,
-	Selected,
-	Disabled
-};
 
 class UWidgetSwitcher;
 class UImage;

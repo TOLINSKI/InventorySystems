@@ -65,6 +65,29 @@ FVector2D UInv_WidgetUtils::GetWidgetBottomRight(UWidget* Widget)
 	return ViewportPosition;
 }
 
+FVector2D UInv_WidgetUtils::GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition,
+                                                     const FVector2D& Boundary)
+{
+	FVector2D Result = ViewportPosition;
+	const FVector2D& WidgetSize = Widget->GetDesiredSize();
+	
+	if (ViewportPosition.X + WidgetSize.X > Boundary.X)
+	{
+		Result.X = Boundary.X - WidgetSize.X;
+	}
+	
+	Result.X = FMath::Max(Result.X, 0.f);
+	
+	if (ViewportPosition.Y + WidgetSize.Y > Boundary.Y)
+	{
+		Result.Y = Boundary.Y - WidgetSize.Y;
+	}
+	
+	Result.Y = FMath::Max(Result.Y, 0.f);
+	
+	return Result;
+}
+
 bool UInv_WidgetUtils::IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition)
 {
 	const FVector2D WidgetTopLeft = GetWidgetPosition(Widget);

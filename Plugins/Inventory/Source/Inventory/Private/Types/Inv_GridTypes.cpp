@@ -133,7 +133,7 @@ void FInv_GridGrabQuery::ResetIndex()
 	SetPossibleIndex(GetGridItem()->GetIndex());
 }
 
-void FInv_GridPopUp::Init(FInv_GridItem& GridItem, UInv_ItemPopUp* PopUpMenu)
+void FInv_GridPopUp::Init(FInv_GridItem& GridItem, UUserWidget* PopUpMenu)
 {
 	if (IsValid(PopUpMenu))
 	{

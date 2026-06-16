@@ -189,9 +189,9 @@ struct FInv_GridPopUp
 
 	FInv_GridPopUp() = default;
 	
-	void Init(FInv_GridItem& GridItem, UInv_ItemPopUp* PopUpMenu = nullptr);
+	void Init(FInv_GridItem& GridItem, UUserWidget* PopUpMenu = nullptr);
 	
-	UInv_ItemPopUp* GetWidget() const { return PopUpWidget; }
+	UUserWidget* GetWidget() const { return PopUpWidget; }
 	
 	int32 GetIndex() const { return TargetGridItem->GetIndex(); }
 	
@@ -199,7 +199,16 @@ struct FInv_GridPopUp
 	
 private:
 	UPROPERTY()
-	TObjectPtr<UInv_ItemPopUp> PopUpWidget { nullptr };
+	TObjectPtr<UUserWidget> PopUpWidget { nullptr };
 	
 	FInv_GridItem* TargetGridItem { nullptr };
+};
+
+UENUM(BlueprintType)
+enum class EInv_GridSlotState : uint8
+{
+	Unoccupied,
+	Occupied,
+	Selected,
+	Disabled
 };
