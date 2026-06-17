@@ -5,6 +5,7 @@
 
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 int32 UBxWidgetUtils::CoordinateToArrayIndex(const FIntPoint& Coordinate, const int32 NumColumns)
 {
@@ -61,4 +62,27 @@ bool UBxWidgetUtils::IsWidgetBoundByWidget(UWidget* SmallerWidget, UWidget* Bigg
 	const FVector2D BiggerWidgetTopLeft = GetWidgetPosition(BiggerWidget);
 	const FVector2D BiggerWidgetBottomRight = GetWidgetBottomRight(BiggerWidget);
 	return SmallerWidgetTopLeft.ComponentwiseAllGreaterOrEqual(BiggerWidgetTopLeft) && SmallerWidgetBottomRight.ComponentwiseAllLessOrEqual(BiggerWidgetBottomRight);
+}
+
+FVector2D UBxWidgetUtils::GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition)
+{
+	FVector2D Result = ViewportPosition;
+	const FVector2D& WidgetSize = Widget->GetDesiredSize();
+	const FVector2D& ViewportSize = UWidgetLayoutLibrary::GetViewportSize(Widget);
+	
+	if (ViewportPosition.X + WidgetSize.X > ViewportSize.X)
+	{
+		Result.X = ViewportSize.X - WidgetSize.X;
+	}
+	
+	Result.X = FMath::Max(Result.X, 0.f);
+	
+	if (ViewportPosition.Y + WidgetSize.Y > ViewportSize.Y)
+	{
+		Result.Y = ViewportSize.Y - WidgetSize.Y;
+	}
+	
+	Result.Y = FMath::Max(Result.Y, 0.f);
+	
+	return Result;
 }

@@ -38,6 +38,11 @@ void UInv_ItemComponent::PrintStackCount() const
 	}
 }
 
+void UInv_ItemComponent::SetItemSpec(FInv_ItemSpec ItemSpecCopy)
+{
+	ItemSpec = MoveTemp(ItemSpecCopy);
+}
+
 #undef LOCTEXT_NAMESPACE
 
 

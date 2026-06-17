@@ -5,6 +5,7 @@
 
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 int32 UInv_WidgetUtils::GridCoordinatesToIndex(const FIntPoint& Position, const int32 Columns)
 {
@@ -65,22 +66,22 @@ FVector2D UInv_WidgetUtils::GetWidgetBottomRight(UWidget* Widget)
 	return ViewportPosition;
 }
 
-FVector2D UInv_WidgetUtils::GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition,
-                                                     const FVector2D& Boundary)
+FVector2D UInv_WidgetUtils::GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition)
 {
 	FVector2D Result = ViewportPosition;
 	const FVector2D& WidgetSize = Widget->GetDesiredSize();
+	const FVector2D& ViewportSize = UWidgetLayoutLibrary::GetViewportSize(Widget);
 	
-	if (ViewportPosition.X + WidgetSize.X > Boundary.X)
+	if (ViewportPosition.X + WidgetSize.X > ViewportSize.X)
 	{
-		Result.X = Boundary.X - WidgetSize.X;
+		Result.X = ViewportSize.X - WidgetSize.X;
 	}
 	
 	Result.X = FMath::Max(Result.X, 0.f);
 	
-	if (ViewportPosition.Y + WidgetSize.Y > Boundary.Y)
+	if (ViewportPosition.Y + WidgetSize.Y > ViewportSize.Y)
 	{
-		Result.Y = Boundary.Y - WidgetSize.Y;
+		Result.Y = ViewportSize.Y - WidgetSize.Y;
 	}
 	
 	Result.Y = FMath::Max(Result.Y, 0.f);

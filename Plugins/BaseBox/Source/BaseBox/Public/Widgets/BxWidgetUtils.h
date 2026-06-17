@@ -39,4 +39,14 @@ public:
 	/** Returns true if Smaller Widget is within Bigger Widget geometry */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static bool IsWidgetBoundByWidget(UWidget* SmallerWidget, UWidget* BiggerWidget);
+
+	/** 
+	 * Gets the position that keeps the widget inside the viewport boundaries
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 * 
+	 * @return The clamped position in viewport scale
+	 */
+	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	static FVector2D GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition);
 };

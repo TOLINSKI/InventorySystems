@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "Widgets/Composite/Inv_CompositeWidgetContainer.h"
 #include "Inv_ItemDescription.generated.h"
 
 UCLASS()
-class INVENTORY_API UInv_ItemDescription : public UUserWidget
+class INVENTORY_API UInv_ItemDescription : public UInv_CompositeWidgetContainer
 {
 	GENERATED_BODY()
 };

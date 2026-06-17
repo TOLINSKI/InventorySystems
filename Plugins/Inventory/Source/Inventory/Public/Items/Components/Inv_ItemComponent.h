@@ -30,6 +30,8 @@ public:
 	
 	void PrintStackCount() const;
 	
+	void SetItemSpec(FInv_ItemSpec ItemSpecCopy);
+	
 protected:
 	UPROPERTY(Replicated, EditAnywhere, Category="Inventory")
 	FInv_ItemSpec ItemSpec;

@@ -129,7 +129,7 @@ private:
 	
 	TSet<int32> FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const;
 	
-	TSet<int32> FindIndecesToOccupy(int32 Index, const FIntPoint& Range2D) const;
+	TSet<int32> FindIndicesToOccupy(int32 Index, const FIntPoint& Range2D) const;
 	
 	UInv_InventoryItem* GetItemObjectAtIndex(int32 Index) const;
 	

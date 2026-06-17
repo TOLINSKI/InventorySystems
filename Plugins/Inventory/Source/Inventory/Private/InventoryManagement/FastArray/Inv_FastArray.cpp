@@ -57,7 +57,7 @@ UInv_InventoryItem* FInv_InventoryFastArray::AddItem(UInv_ItemComponent* ItemCom
 	check(IsValid(InventoryComponent));
 	
 	FInv_InventoryFastArrayItem& Item = Items.AddDefaulted_GetRef();
-	Item.SetObject(ItemComponent->GetItemSpec().CreateItem(OwningActor));
+	Item.SetObject(ItemComponent->GetMutableItemSpec().CreateItem(OwningActor));
 	
 	InventoryComponent->AddRepSubObj(Item.Get());
 	MarkItemDirty(Item);

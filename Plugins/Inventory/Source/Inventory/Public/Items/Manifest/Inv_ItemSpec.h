@@ -10,6 +10,7 @@
 
 #include "Inv_ItemSpec.generated.h"
 
+class UInv_CompositeWidget;
 struct FInv_ItemFragment;
 class UInv_InventoryItem;
 
@@ -19,14 +20,18 @@ struct INVENTORY_API FInv_ItemSpec
 	GENERATED_BODY()
 
 public:
-	UInv_InventoryItem* CreateItem(UObject* Outer) const;
+	UInv_InventoryItem* CreateItem(UObject* Outer);
 
 	void SpawnItem(const UObject* WorldContextObject, const FVector& Location, const FRotator& Rotation, int32 StackCount = 1) const;
+	
+	void ApplyToCompositeWidget(UInv_CompositeWidget* Widget) const;
 	
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 	
 	FGameplayTag GetItemTag() const { return ItemTag; }
 
+	TArray<TInstancedStruct<FInv_ItemFragment>>& GetMutableFragments() { return Fragments; }
+	
 	template<typename T> requires std::derived_from<T, FInv_ItemFragment>
 	const T* GetFragment() const; 
 	
@@ -46,6 +51,8 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	FGameplayTag ItemTag;
+	
+	void ClearFragments();
 };
 
 template<typename T> requires std::derived_from<T, FInv_ItemFragment>

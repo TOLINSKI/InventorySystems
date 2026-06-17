@@ -348,7 +348,7 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 		Visited.Append(Occupied);
 		if (Occupied.Num() > 0) continue;
 		
-		TSet<int32> ToOccupy = FindIndecesToOccupy(i, GridSpan);
+		TSet<int32> ToOccupy = FindIndicesToOccupy(i, GridSpan);
 		Visited.Append(ToOccupy);
 		
 		if (Result.bIsStackable)
@@ -499,7 +499,7 @@ TSet<int32> UInv_InventoryGrid::FindOccupiedIndices(int32 Index, const FIntPoint
 	return Occupied;
 }
 
-TSet<int32> UInv_InventoryGrid::FindIndecesToOccupy(int32 Index, const FIntPoint& Range2D) const
+TSet<int32> UInv_InventoryGrid::FindIndicesToOccupy(int32 Index, const FIntPoint& Range2D) const
 {
 	TSet<int32> Occupied;
 	
@@ -637,13 +637,14 @@ void UInv_InventoryGrid::OnItemClicked(UInv_ItemWidget* ItemWidget, const FPoint
 		SetGridSlotsStateInRange(EInv_GridSlotState::Unoccupied, ItemIndex, GridItem->GetGridSpan());
 	
 		SetCursor(EMouseCursor::Type::GrabHandClosed);
-		return;
 	}
 	
 	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
 		CreatePopUpMenu(*GridItem);
 	}
+	
+	HidePopUpDescription();
 }
 
 void UInv_InventoryGrid::OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent)
@@ -816,21 +817,26 @@ void UInv_InventoryGrid::CreatePopUpDescription(FInv_GridItem& GridItem)
 		PopUpDescription.Init(GridItem);
 	}
 	   
-	UUserWidget* PopUpWidget = PopUpDescription.GetWidget();
+	const FInv_ItemSpec& ItemSpec = GridItem.GetItem()->GetItemSpec();
+	UInv_CompositeWidget* DescriptionWidget = Cast<UInv_CompositeWidget>(PopUpDescription.GetWidget());
+	DescriptionWidget->ApplyFunction([ItemSpec](UInv_CompositeWidget* CompositeWidget)
+	{
+		ItemSpec.ApplyToCompositeWidget(CompositeWidget);
+	});
 	
 	// Handle Visibility
-	PopUpWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-	PopUpWidget->AddToViewport();
+	DescriptionWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	DescriptionWidget->AddToViewport();
+	DescriptionWidget->ForceLayoutPrepass();
 	
 	// Handle Position
 	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
 	const FVector2D ClampedWidgetPosition = 
 		UInv_WidgetUtils::GetClampedWidgetPosition(
-			PopUpWidget, 
-			MousePosition + FVector2D(-20.f, -20.f), 
-			UWidgetLayoutLibrary::GetViewportSize(this) / UWidgetLayoutLibrary::GetViewportScale(this));
+			DescriptionWidget, 
+			MousePosition + FVector2D(-20.f, -20.f));
 	
-	PopUpDescription.GetWidget()->SetPositionInViewport(ClampedWidgetPosition, false);
+	DescriptionWidget->SetPositionInViewport(ClampedWidgetPosition, false);
 }
 
 void UInv_InventoryGrid::DropLastGrabbedItem()

@@ -9,6 +9,7 @@
 
 #include "Inv_ItemFragment.generated.h"
 
+class UInv_CompositeWidget;
 class UInv_InventoryItem;
 
 USTRUCT(BlueprintType)
@@ -30,7 +31,15 @@ public:
 	FGameplayTag GetFragmentTag() const { return FragmentTag; }
 	void SetFragmentTag(FGameplayTag Tag) { FragmentTag = Tag; }
 	
+	virtual void ApplyToCompositeWidget(UInv_CompositeWidget* Widget) const;
+	
+	virtual void InitFragment() {};
+	
+protected:
+	bool MatchesCompositeWidget(const UInv_CompositeWidget* Widget) const;
+	
 private:
 	UPROPERTY(EditAnywhere, Category="Inventory", meta = (Categories = "Inventory.Fragments"))
 	FGameplayTag FragmentTag;
 };
+

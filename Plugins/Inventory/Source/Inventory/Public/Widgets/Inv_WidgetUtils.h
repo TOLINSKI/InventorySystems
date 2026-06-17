@@ -22,8 +22,7 @@ public:
 	static FVector2D GetWidgetPosition(UWidget* Widget);
 	static FVector2D GetWidgetCenter(UWidget* Widget);
 	static FVector2D GetWidgetBottomRight(UWidget* Widget);
-	
-	static FVector2D GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition, const FVector2D& Boundary);
+	static FVector2D GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition);
 	
 	UFUNCTION(BlueprintCallable, Category="Inventory Widget Utils")
 	static bool IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition);
