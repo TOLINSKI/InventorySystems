@@ -16,19 +16,11 @@ class INVENTORY_API UInv_WidgetUtils : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
-	static int32 GridCoordinatesToIndex(const FIntPoint& Position, const int32 Columns);
-	static FIntPoint IndexToGridCoordinates(const int32 Index, const int32 Columns);
 	static TSet<int32> GetOccupiedIndices(const int32 Index, const FIntPoint& Range2D, const int32 Columns);
-	static FVector2D GetWidgetPosition(UWidget* Widget);
-	static FVector2D GetWidgetCenter(UWidget* Widget);
-	static FVector2D GetWidgetBottomRight(UWidget* Widget);
 	static FVector2D GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition);
 	
-	UFUNCTION(BlueprintCallable, Category="Inventory Widget Utils")
-	static bool IsPositionBoundByWidget(UWidget* Widget, const FVector2D& ViewportPosition);
-
-	UFUNCTION(BlueprintCallable, Category="Inventory Widget Utils")
-	static bool IsWidgetBoundByWidget(UWidget* BiggerWidget, UWidget* SmallerWidget);
+	static int32 GridCoordinatesToIndex(const FIntPoint& Position, const int32 Columns);
+	static FIntPoint IndexToGridCoordinates(const int32 Index, const int32 Columns);
 	
 	template<typename T, typename Predicate>
 	static void ForEach2D(TArray<T>& Array, const int32 Index, const FIntPoint& Range2D, int32 Columns, const Predicate& Pred);

@@ -28,8 +28,6 @@ public:
 	
 	void PickUp();
 	
-	void PrintStackCount() const;
-	
 	void SetItemSpec(FInv_ItemSpec ItemSpecCopy);
 	
 protected:

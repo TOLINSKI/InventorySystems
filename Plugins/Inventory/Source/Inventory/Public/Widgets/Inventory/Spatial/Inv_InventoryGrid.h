@@ -22,7 +22,7 @@ class UInv_InventoryItem;
 class UInv_GridSlot;
 class UGridPanel;
 
-DECLARE_DELEGATE(FInv_GridEvent);
+DECLARE_DELEGATE_OneParam(FInv_GridItemEvent, FInv_GridItem& Item);
 
 UCLASS()
 class INVENTORY_API UInv_InventoryGrid : public UUserWidget
@@ -34,9 +34,14 @@ public:
 
 	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
 	
-	FInv_GridEvent OnUnClicked;
+	FInv_GridItemEvent OnGridBeginGrabItem;
 	
-	void DropLastGrabbedItem();
+	void DropGrabbedItem();
+	
+	UInv_InventoryItem* GetGrabbedItem() const;
+	
+	UFUNCTION()
+	void ReturnGrabbedItem();
 	
 protected:
 	virtual void NativePreConstruct() override;
@@ -74,7 +79,7 @@ protected:
 	
 	UPROPERTY(BlueprintReadWrite, Category="Inventory", meta = (BindWidget))
 	TObjectPtr<UGridPanel> GridPanel_Items; 
-
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UInv_GridSlot>> GridSlots;
@@ -114,9 +119,9 @@ private:
 
 	UFUNCTION()
 	void OnItemClicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-
-	UFUNCTION()
-	void OnItemUnclicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	
+	void ExchangeStacks(FInv_GridItem& Source, FInv_GridItem& TargetItem);
+	
 	void HidePopUpDescription();
 
 	UFUNCTION()
@@ -157,7 +162,6 @@ private:
 	
 	UInv_GridSlot* FindGridSlotByCoordinates(const FIntPoint& GridCoordinates);
 	
-	
 	// Begin Grid Pop Up Menu
 	UPROPERTY()
 	FInv_GridPopUp PopUpMenu;
@@ -173,7 +177,7 @@ private:
 	UFUNCTION()
 	void OnPopUpMenuDropAction(int32 DropAmount);
 	
-	void DropGridItem(FInv_GridItem* GridItem, int32 Amount);
+	void DropGridItem(FInv_GridItem* GridItem, int32 Amount = -1);
 
 	void UseGridItem(FInv_GridItem* GridItem, int32 Amount);
 	// End Grid Pop Up Menu

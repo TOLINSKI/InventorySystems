@@ -7,16 +7,59 @@
 #include "Components/WidgetSwitcher.h"
 #include "Items/Components/Inv_ItemComponent.h"
 #include "Widgets/Inventory/Spatial/Inv_InventoryGrid.h"
+#include "Widgets/Item/Inv_ItemWidget.h"
+
+void UInv_SpatialInventory::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+	
+	SetIsFocusable(true);
+}
 
 void UInv_SpatialInventory::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	Grid_Equippables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
-	Grid_Consumables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
-	Grid_Craftables->OnUnClicked.BindUObject(this, &UInv_SpatialInventory::OnReleasedGridItem);
+	Grid_Equippables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
+	Grid_Consumables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
+	Grid_Craftables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
 	
 	SwitchGridCategory(EInv_ItemCategory::Equippable);
+}
+
+FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		if (!GrabbedGridItem)
+		{
+			return FReply::Unhandled();
+		}
+	
+		if (ShouldDropItem())
+		{
+			// Drop the item (do not return it to the grid)
+			GetActiveGrid()->DropGrabbedItem();
+		}
+		else
+		{
+			// Handle returning or stacking the item in the inventory
+			GetActiveGrid()->ReturnGrabbedItem();
+		}
+		
+		GrabbedGridItem = nullptr;
+		GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+		return FReply::Handled();
+	}
+	
+	return FReply::Unhandled();
+}
+
+void UInv_SpatialInventory::OnGridBeginGrabItem(FInv_GridItem& GridItem)
+{
+	GrabbedGridItem = &GridItem;
+	GetOwningPlayer()->SetInputMode(FInputModeUIOnly());
+	SetFocus();
 }
 
 FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const
@@ -32,6 +75,21 @@ void UInv_SpatialInventory::SwitchGridCategory(EInv_ItemCategory Category)
 	Grid_Switcher->SetActiveWidget(GridToActivate);
 	
 	OnCategorySelected(Category);
+}
+
+UInv_InventoryItem* UInv_SpatialInventory::GetGrabbedItem() const
+{
+	if (const UInv_InventoryGrid* ActiveGrid = GetActiveGrid())
+	{
+		return ActiveGrid->GetGrabbedItem();
+	}
+	
+	return nullptr;
+}
+
+UUserWidget* UInv_SpatialInventory::GetGrabbedWidget() const
+{
+	return GrabbedGridItem ? GrabbedGridItem->GetItemWidget() : nullptr;
 }
 
 UInv_InventoryGrid* UInv_SpatialInventory::GetGridByCategory(EInv_ItemCategory Category) const
@@ -52,11 +110,4 @@ UInv_InventoryGrid* UInv_SpatialInventory::GetActiveGrid() const
 	return Cast<UInv_InventoryGrid>(Grid_Switcher->GetActiveWidget());
 }
 
-void UInv_SpatialInventory::OnReleasedGridItem()
-{
-	if (ShouldDropItem())
-	{
-		GetActiveGrid()->DropLastGrabbedItem();
-	}
-}
 

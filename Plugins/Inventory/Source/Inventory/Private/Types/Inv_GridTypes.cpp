@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Items/Fragments/Inv_StackFragment.h"
+#include "Widgets/BxWidgetUtils.h"
 #include "Widgets/Inv_WidgetUtils.h"
 #include "Widgets/Item/Inv_ItemPopUp.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
@@ -72,37 +73,35 @@ FGameplayTag FInv_GridItem::GetItemTag() const
 
 void FInv_GridGrabQuery::UpdateGrabbedItemPosition(const FVector2D& MousePosition) const
 {
-	UInv_ItemWidget* Widget = GetGridItem()->GetItemWidget();
-	const FVector2D Difference = (MousePosition - InitGrabPosition); 
-	const FVector2D NewWidgetPosition = InitWidgetPosition + Difference;
-	Widget->SetPositionInViewport(NewWidgetPosition, false);
+	const FVector2D NewPosition = GetRelativeWidgetPosition(MousePosition);
 	
-	const FVector2D TestWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
-	UE_LOG(LogInventory, Display, TEXT("Init Grab Position: %s"), *InitGrabPosition.ToString());
-	UE_LOG(LogInventory, Display, TEXT("Init Widget Position: %s"), *InitWidgetPosition.ToString());
-	UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
-	UE_LOG(LogInventory, Display, TEXT("Current Grab Position: %s"), *MousePosition.ToString());
-	UE_LOG(LogInventory, Display, TEXT("Current Widget Position: %s"), *NewWidgetPosition.ToString());
-	UE_LOG(LogInventory, Display, TEXT("Current Difference: %s"), *Difference.ToString());
-	UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
-	UE_LOG(LogInventory, Display, TEXT("Test Widget Position: %s"), *TestWidgetPosition.ToString());
-	UE_LOG(LogInventory, Display, TEXT("==========================================================="));
+	UInv_ItemWidget* Widget = GetGridItem()->GetItemWidget();
+	Widget->SetPositionInViewport(NewPosition, false);
+	
+	// UE_LOG(LogInventory, Display, TEXT("Init Grab Position: %s"), *InitMousePosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Init Widget Position: %s"), *InitWidgetPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
+	// UE_LOG(LogInventory, Display, TEXT("Current Grab Position: %s"), *MousePosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Current Widget Position: %s"), *NewWidgetPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
+	// UE_LOG(LogInventory, Display, TEXT("Position Relative to Mouse: %s"), *NewPosition.ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Position From GetWidgetPosition(): %s"), *UBxWidgetUtils::GetWidgetPosition(Widget).ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Bottom Right From GetWidgetBottomRight(): %s"), *UBxWidgetUtils::GetWidgetBottomRight(Widget).ToString());
+	// UE_LOG(LogInventory, Display, TEXT("==========================================================="));
 }
 
 void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
 {
 	ResetQuery();
 	bIsGrabbing = true;
+	
 	GrabbedItem = &InGridItem;
-	InitGrabPosition = MouseCursorPosition;
 	LastPossibleIndex = GrabbedItem->GetIndex();
-	
+
 	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
-	InitWidgetPosition = UInv_WidgetUtils::GetWidgetPosition(Widget);
-	
-	Widget->RemoveFromParent();
-	Widget->AddToViewport();
-	UpdateGrabbedItemPosition(UWidgetLayoutLibrary::GetMousePositionOnViewport(Widget));
+	InitWidgetPosition = UBxWidgetUtils::GetWidgetPosition(Widget);
+	InitMousePosition = MouseCursorPosition;
+	DistMouseToWidget = InitWidgetPosition - InitMousePosition;
 }
 
 void FInv_GridGrabQuery::ResetQuery()
@@ -131,6 +130,11 @@ UUserWidget* FInv_GridGrabQuery::GetWidget() const
 void FInv_GridGrabQuery::ResetIndex()
 {
 	SetPossibleIndex(GetGridItem()->GetIndex());
+}
+
+FVector2D FInv_GridGrabQuery::GetRelativeWidgetPosition(const FVector2D& MousePosition) const
+{
+	return MousePosition + DistMouseToWidget;
 }
 
 void FInv_GridPopUp::Init(FInv_GridItem& GridItem, UUserWidget* PopUpMenu)

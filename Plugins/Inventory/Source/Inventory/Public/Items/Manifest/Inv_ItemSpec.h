@@ -22,7 +22,7 @@ struct INVENTORY_API FInv_ItemSpec
 public:
 	UInv_InventoryItem* CreateItem(UObject* Outer);
 
-	void SpawnItem(const UObject* WorldContextObject, const FVector& Location, const FRotator& Rotation, int32 StackCount = 1) const;
+	void SpawnPickupItem(const UObject* WorldContextObject, const FVector& Location, const FRotator& Rotation, int32 StackCount = 1) const;
 	
 	void ApplyToCompositeWidget(UInv_CompositeWidget* Widget) const;
 	

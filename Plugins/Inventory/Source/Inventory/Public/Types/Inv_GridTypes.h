@@ -154,12 +154,16 @@ struct FInv_GridGrabQuery
 	
 	void ResetIndex();
 	
+	FVector2D GetRelativeWidgetPosition(const FVector2D& MousePosition) const;
+	
 private:
 	bool bIsGrabbing { false };
 	
-	FVector2D InitGrabPosition {};
+	FVector2D InitMousePosition {};
 	
 	FVector2D InitWidgetPosition {};
+	
+	FVector2D DistMouseToWidget {};
 	
 	int32 LastPossibleIndex { INDEX_NONE };
 	

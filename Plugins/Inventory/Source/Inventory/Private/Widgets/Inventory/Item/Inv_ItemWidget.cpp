@@ -13,11 +13,11 @@ FReply UInv_ItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, con
 
 FReply UInv_ItemWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-	{
-		OnItemUnclicked.Broadcast(this, InMouseEvent);
-	}
-	return FReply::Handled();
+	// if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	// {
+	// 	OnItemUnclicked.Broadcast(this, InMouseEvent);
+	// }
+	return FReply::Unhandled();
 }
 
 void UInv_ItemWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

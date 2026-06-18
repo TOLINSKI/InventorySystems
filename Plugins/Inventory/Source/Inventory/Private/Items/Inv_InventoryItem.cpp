@@ -10,7 +10,7 @@ void UInv_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ThisClass, ItemSpec);
-	DOREPLIFETIME(ThisClass, TotalStackCount);
+	DOREPLIFETIME(ThisClass, TotalAmountInInventory);
 }
 
 void UInv_InventoryItem::SetItemSpec(const FInv_ItemSpec& Spec)

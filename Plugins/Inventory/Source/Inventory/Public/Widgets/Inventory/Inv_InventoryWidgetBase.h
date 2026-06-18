@@ -18,4 +18,6 @@ class INVENTORY_API UInv_InventoryWidgetBase : public UUserWidget
 	
 public:
 	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const { return FInv_SlotAvailabilityResult(); }
+	
+	virtual UInv_InventoryItem* GetGrabbedItem() const { return nullptr; };
 };

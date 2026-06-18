@@ -30,14 +30,6 @@ void UInv_ItemComponent::PickUp()
 	GetOwner()->Destroy();
 }
 
-void UInv_ItemComponent::PrintStackCount() const
-{
-	if (const FInv_StackFragment* StackFragment = GetItemSpec().GetFragment<FInv_StackFragment>())
-	{
-		UE_LOG(LogInventory, Display, TEXT("%s Stack Count: %d"), *GetOwner()->GetActorNameOrLabel(), StackFragment->GetStackCount());
-	}
-}
-
 void UInv_ItemComponent::SetItemSpec(FInv_ItemSpec ItemSpecCopy)
 {
 	ItemSpec = MoveTemp(ItemSpecCopy);

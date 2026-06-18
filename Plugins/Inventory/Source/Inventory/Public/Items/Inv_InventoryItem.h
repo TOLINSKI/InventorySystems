@@ -28,11 +28,11 @@ public:
 	
 	FInv_ItemSpec& GetMutableItemSpec() { return ItemSpec.GetMutable<FInv_ItemSpec>(); }
 	
-	void SetStackCount(int32 Count) { TotalStackCount = Count; }
+	void SetTotalAmountInInvetory(int32 Count) { TotalAmountInInventory = Count; }
 	
-	void AddStackCount(int32 Count) { TotalStackCount += Count; }
+	void AddStackCount(int32 Count) { TotalAmountInInventory += Count; }
 	
-	int32 GetStackCount() const { return TotalStackCount; }
+	int32 GetTotalAmountInInentory() const { return TotalAmountInInventory; }
 	
 	FGameplayTag GetItemTag() const;
 	
@@ -41,5 +41,5 @@ private:
 	FInstancedStruct ItemSpec;
 	
 	UPROPERTY(Replicated)
-	int32 TotalStackCount { 0 };
+	int32 TotalAmountInInventory { 0 };
 };

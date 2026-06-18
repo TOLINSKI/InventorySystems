@@ -75,6 +75,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	bool IsValidInventory() const;
 	
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	UInv_InventoryWidgetBase* GetInventoryMenu();
+	
 private:
 	TWeakObjectPtr<APlayerController> OwningPlayer;
 	

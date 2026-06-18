@@ -29,6 +29,8 @@ void UInv_GridSlot::SetGridSlotState(EInv_GridSlotState State)
 	case EInv_GridSlotState::Selected: Image_GridSlot->SetBrush(Brush_Selected); break;
 	default: break;
 	}
+	
+	OnAvailabilityChanged(State);
 }
 
 void UInv_GridSlot::SetSlotSize(FIntPoint Size)
@@ -37,4 +39,10 @@ void UInv_GridSlot::SetSlotSize(FIntPoint Size)
 	Brush_Occupied.SetImageSize(Size);
 	Brush_Selected.SetImageSize(Size);
 	Brush_Disabled.SetImageSize(Size);
+}
+
+void UInv_GridSlot::OnAvailabilityChanged(EInv_GridSlotState Availability)
+{
+	OnGridSlotAvailabilityChanged.Broadcast(Availability);
+	BP_OnAvailabilityChanged(Availability);
 }

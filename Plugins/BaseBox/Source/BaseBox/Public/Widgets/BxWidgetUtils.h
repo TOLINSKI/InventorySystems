@@ -14,29 +14,43 @@ class BASEBOX_API UBxWidgetUtils : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
-	static int32 CoordinateToArrayIndex(const FIntPoint& Coordinate, const int32 NumColumns);
-
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
-	static FIntPoint ArrayIndexToCoordinate(const int32 Index, const int32 NumColumns);
-	
-	/** Get Widget Top Left Corner in Viewport Coordinates */
+	/** 
+	 * Get Widget Top Left Corner in Viewport Coordinates 
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static FVector2D GetWidgetPosition(UWidget* Widget);
 	
-	/** Get Widget Center Position in Viewport Coordinates */
+	/** 
+	 * Get Widget Center Position in Viewport Coordinates 
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static FVector2D GetWidgetCenter(UWidget* Widget);
 
-	/** Get Widget Bottom Right Corner Position in Viewport Coordinates */
+	/** 
+	 * Get Widget Bottom Right Corner Position in Viewport Coordinates 
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static FVector2D GetWidgetBottomRight(UWidget* Widget);
 	
-	/** Returns true if viewport position is within widget geometry */
+	/** 
+	 * Returns true if viewport position is within widget geometry 
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static bool IsPositionBoundByWidget(const FVector2D& ViewportPosition, UWidget* Widget);
 
-	/** Returns true if Smaller Widget is within Bigger Widget geometry */
+	/** 
+	 * Returns true if Smaller Widget is within Bigger Widget geometry 
+	 * 
+	 * NOTE: The underlying Slate widget must exist and be valid, also at least one pre-pass must have occurred before this value will be of any use.
+	 */
 	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
 	static bool IsWidgetBoundByWidget(UWidget* SmallerWidget, UWidget* BiggerWidget);
 

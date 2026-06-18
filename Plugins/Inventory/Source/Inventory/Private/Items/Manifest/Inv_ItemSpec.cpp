@@ -37,7 +37,7 @@ void FInv_ItemSpec::ClearFragments()
 	Fragments.Empty();
 }
 
-void FInv_ItemSpec::SpawnItem(const UObject* WorldContextObject, const FVector& Location,
+void FInv_ItemSpec::SpawnPickupItem(const UObject* WorldContextObject, const FVector& Location,
                               const FRotator& Rotation, int32 StackCount) const
 {
 	AActor* SpawnedItem = WorldContextObject->GetWorld()->SpawnActor(ItemActorClass, &Location, &Rotation);
@@ -45,6 +45,6 @@ void FInv_ItemSpec::SpawnItem(const UObject* WorldContextObject, const FVector& 
 	
 	UInv_ItemComponent* ItemComponent = SpawnedItem->GetComponentByClass<UInv_ItemComponent>();
 	check(IsValid(ItemComponent));
-	
+
 	ItemComponent->SetItemSpec(*this);
 }

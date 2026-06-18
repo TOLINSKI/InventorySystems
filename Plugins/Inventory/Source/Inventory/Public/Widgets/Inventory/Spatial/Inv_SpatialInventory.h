@@ -22,21 +22,33 @@ class INVENTORY_API UInv_SpatialInventory : public UInv_InventoryWidgetBase
 	GENERATED_BODY()
 	
 protected:
+	virtual void NativePreConstruct() override;
+	
 	virtual void NativeOnInitialized() override;
 
+	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
 public:
 	// Begin UInv_InventoryWidgetBase Interface
 	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const override;
 	// End UInv_InventoryWidgetBase Interface
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void SwitchGridCategory(EInv_ItemCategory Category);
 	
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
 	void OnCategorySelected(EInv_ItemCategory Category);
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
 	bool ShouldDropItem();
+
+	virtual UInv_InventoryItem* GetGrabbedItem() const override;
+	
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	UUserWidget* GetGrabbedWidget() const;
+	
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	UInv_InventoryGrid* GetActiveGrid() const;
 	
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -53,7 +65,7 @@ private:
 	
 	UInv_InventoryGrid* GetGridByCategory(EInv_ItemCategory Category) const;
 	
-	UInv_InventoryGrid* GetActiveGrid() const;
+	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
 	
-	void OnReleasedGridItem();
+	FInv_GridItem* GrabbedGridItem;
 };

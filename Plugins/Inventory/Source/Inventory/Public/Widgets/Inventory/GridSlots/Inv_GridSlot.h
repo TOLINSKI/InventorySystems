@@ -10,9 +10,8 @@
 class UWidgetSwitcher;
 class UImage;
 
-/**
- * 
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInv_GridSlotAvailabilityChanged, EInv_GridSlotState, Availability);
+
 UCLASS(BlueprintType, Blueprintable)
 class INVENTORY_API UInv_GridSlot : public UUserWidget
 {
@@ -34,6 +33,14 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="Inventory")
 	int32 ArrayIndex;
+	
+	virtual void OnAvailabilityChanged(EInv_GridSlotState Availability);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
+	void BP_OnAvailabilityChanged(EInv_GridSlotState Availability);
+	
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FInv_GridSlotAvailabilityChanged OnGridSlotAvailabilityChanged;
 	
 private:
 	UPROPERTY(meta = (BindWidget))

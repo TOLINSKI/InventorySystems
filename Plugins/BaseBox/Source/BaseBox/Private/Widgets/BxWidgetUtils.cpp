@@ -7,22 +7,12 @@
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
-int32 UBxWidgetUtils::CoordinateToArrayIndex(const FIntPoint& Coordinate, const int32 NumColumns)
-{
-	return Coordinate.Y * NumColumns + Coordinate.X;
-}
-
-FIntPoint UBxWidgetUtils::ArrayIndexToCoordinate(const int32 Index, const int32 NumColumns)
-{
-	return {Index % NumColumns, Index / NumColumns};
-}
-
 FVector2D UBxWidgetUtils::GetWidgetPosition(UWidget* Widget)
 {
-	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
+	const FVector2D AbsoluteDesktopCoordinate = Widget->GetCachedGeometry().GetAbsolutePosition();
 	FVector2D PixelPosition;
 	FVector2D ViewportPosition;
-	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsolutePosition, PixelPosition, ViewportPosition);
+	USlateBlueprintLibrary::AbsoluteToViewport(Widget->GetOwningPlayer(), AbsoluteDesktopCoordinate, PixelPosition, ViewportPosition);
 	return ViewportPosition;
 }
 

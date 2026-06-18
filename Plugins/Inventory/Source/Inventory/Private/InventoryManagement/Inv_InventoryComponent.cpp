@@ -51,7 +51,7 @@ void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComponent)
 void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder)
 {
 	UInv_InventoryItem* Item = InventoryArray.AddItem(ItemComponent);
-	Item->SetStackCount(StackCount);
+	Item->SetTotalAmountInInvetory(StackCount);
 	
 	const ENetMode NetMode = GetOwner()->GetNetMode();
 	if (NetMode == NM_ListenServer || NetMode == NM_Standalone)
@@ -67,7 +67,6 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 	{
 		FInv_StackFragment* StackFragment = ItemComponent->GetMutableItemSpec().GetMutableFragment<FInv_StackFragment>();
 		StackFragment->SetStackCount(Remainder);
-		ItemComponent->PrintStackCount();
 	}
 }
 
@@ -87,15 +86,14 @@ void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemCom
 	{
 		FInv_StackFragment* StackFragment = ItemComponent->GetMutableItemSpec().GetMutableFragment<FInv_StackFragment>();
 		StackFragment->SetStackCount(Remainder);
-		ItemComponent->PrintStackCount();
 	}
 }
 
 void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem* Item, int32 AmountToRemove, bool bSpawnDroppedItem)
 {
-	const int32 StackCount = Item->GetStackCount();
-	Item->SetStackCount(FMath::Max(StackCount - AmountToRemove, 0));
-	if (Item->GetStackCount() == 0)
+	const int32 StackCount = Item->GetTotalAmountInInentory();
+	Item->SetTotalAmountInInvetory(FMath::Max(StackCount - AmountToRemove, 0));
+	if (Item->GetTotalAmountInInentory() == 0)
 	{
 		InventoryArray.RemoveItem(Item);
 	}
@@ -107,16 +105,21 @@ void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem*
 
 void UInv_InventoryComponent::Server_UseItem_Implementation(UInv_InventoryItem* Item, int32 Amount)
 {
-	const int32 StackCount = Item->GetStackCount();
-	Item->SetStackCount(FMath::Max(StackCount - Amount, 0));
-	if (Item->GetStackCount() == 0)
+	const int32 TotalAmount = Item->GetTotalAmountInInentory();
+	const int32 NewTotal = FMath::Max(TotalAmount - Amount, 0);
+	Item->SetTotalAmountInInvetory(NewTotal);
+	if (NewTotal == 0)
 	{
 		InventoryArray.RemoveItem(Item);
 	}
 	
-	if (FInv_UsableFragment* UsableFrag = Item->GetMutableItemSpec().GetMutableFragment<FInv_UsableFragment>())
+	// Technically an item that gets used must have a usable fragment
+	if (const FInv_UsableFragment* UsableFrag = Item->GetItemSpec().GetFragment<FInv_UsableFragment>())
 	{
-		UsableFrag->OnUsed(OwningPlayer.Get());
+		for (int32 i = 0; i < Amount; i++)
+		{
+			UsableFrag->OnUsed(OwningPlayer.Get());
+		}
 	}
 }
 
@@ -129,7 +132,12 @@ void UInv_InventoryComponent::SpawnDroppedItem(UInv_InventoryItem* Item, int32 S
 	FVector RandomSpawnLocation = SpawnOrigin + FMath::VRand() * FMath::RandRange(-200.f, 200.f);
 	RandomSpawnLocation.Z = PawnLocation.Z - 90.f;
 	
-	Item->GetItemSpec().SpawnItem(this, RandomSpawnLocation, FRotator::ZeroRotator, StackCount);
+	if (FInv_StackFragment* StackFragment = Item->GetMutableItemSpec().GetMutableFragment<FInv_StackFragment>())
+	{
+		StackFragment->SetStackCount(StackCount);
+	}
+	
+	Item->GetItemSpec().SpawnPickupItem(this, RandomSpawnLocation, FRotator::ZeroRotator, StackCount);
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
@@ -179,6 +187,11 @@ bool UInv_InventoryComponent::IsInventoryOpen() const
 bool UInv_InventoryComponent::IsValidInventory() const
 {
 	return OwningPlayer.IsValid() && IsValid(InventoryMenu);
+}
+
+UInv_InventoryWidgetBase* UInv_InventoryComponent::GetInventoryMenu()
+{
+	return InventoryMenu;
 }
 
 void UInv_InventoryComponent::BeginPlay()
