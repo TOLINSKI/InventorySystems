@@ -12,7 +12,8 @@ struct INVENTORY_API FInv_UsableModifier : public FInv_LabeledValueFragment
 {
 	GENERATED_BODY()
 	
-	virtual void OnUsed(APlayerController* PlayerController) const {};
+	virtual void OnUsed(APlayerController* PlayerController) {};
+	virtual void OnUnUsed(APlayerController* PlayerController) {};
 };
 
 USTRUCT(BlueprintType, DisplayName= "Usable Fragment")
@@ -27,7 +28,10 @@ struct INVENTORY_API FInv_UsableFragment : public FInv_ItemFragment
 	
 	virtual void ApplyToCompositeWidget(UInv_CompositeWidget* Widget) const override;
 	
-	virtual void OnUsed(APlayerController* PlayerController) const;
+	virtual void OnUsed(APlayerController* PlayerController);
+	virtual void OnUnUsed(APlayerController* PlayerController);
+	
+	bool bIsUsed { false };
 	
 	virtual void InitFragment() override;
 	
@@ -36,20 +40,30 @@ private:
 	TArray<TInstancedStruct<FInv_UsableModifier>> ValueModifiers;
 };
 
-USTRUCT(BlueprintType, DisplayName="Usable Health Potion")
-struct INVENTORY_API FInv_UsableHealthPotion : public FInv_UsableModifier
+USTRUCT(BlueprintType, DisplayName="Health Modifier")
+struct INVENTORY_API FInv_HealthModifier : public FInv_UsableModifier
 {
 	GENERATED_BODY()
 	
 public:
-	virtual void OnUsed(APlayerController* PlayerController) const override;
+	virtual void OnUsed(APlayerController* PlayerController) override;
 };
 
-USTRUCT(BlueprintType, DisplayName="Usable Mana Potion")
-struct INVENTORY_API FInv_UsableManaPotion : public FInv_UsableModifier
+USTRUCT(BlueprintType, DisplayName="Mana Modifier")
+struct INVENTORY_API FInv_ManaModifier : public FInv_UsableModifier
 {
 	GENERATED_BODY()
 	
 public:
-	virtual void OnUsed(APlayerController* PlayerController) const override;
+	virtual void OnUsed(APlayerController* PlayerController) override;
+}; 
+
+USTRUCT(BlueprintType, DisplayName="Strength Modifier")
+struct INVENTORY_API FInv_StrengthModifier : public FInv_UsableModifier
+{
+	GENERATED_BODY()
+	
+public:
+	virtual void OnUsed(APlayerController* PlayerController) override;
+	virtual void OnUnUsed(APlayerController* PlayerController) override;
 };

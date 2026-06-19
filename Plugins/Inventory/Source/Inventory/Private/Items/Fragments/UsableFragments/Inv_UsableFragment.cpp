@@ -4,12 +4,27 @@
 
 #include "Inventory.h"
 
-void FInv_UsableFragment::OnUsed(APlayerController* PlayerController) const
+void FInv_UsableFragment::OnUsed(APlayerController* PlayerController)
 {
-	for (const auto& Modifier : ValueModifiers)
+	if (bIsUsed) return;
+	bIsUsed = true;
+	
+	for (auto& Modifier : ValueModifiers)
 	{
-		const FInv_UsableModifier& UsableModifier = Modifier.Get();
+		FInv_UsableModifier& UsableModifier = Modifier.GetMutable();
 		UsableModifier.OnUsed(PlayerController);
+	}
+}
+
+void FInv_UsableFragment::OnUnUsed(APlayerController* PlayerController)
+{
+	if (!bIsUsed) return;
+	bIsUsed = false;
+	
+	for (auto& Modifier : ValueModifiers)
+	{
+		FInv_UsableModifier& UsableModifier = Modifier.GetMutable();
+		UsableModifier.OnUnUsed(PlayerController);
 	}
 }
 
@@ -18,7 +33,7 @@ void FInv_UsableFragment::InitFragment()
 	FInv_ItemFragment::InitFragment();
 	for (auto& Modifier : ValueModifiers)
 	{
-		FInv_LabeledValueFragment& LabeledValueFragment = Modifier.GetMutable();
+		auto& LabeledValueFragment = Modifier.GetMutable();
 		LabeledValueFragment.InitFragment();
 	}
 }
@@ -27,12 +42,12 @@ void FInv_UsableFragment::ApplyToCompositeWidget(UInv_CompositeWidget* Widget) c
 {
 	for (auto& Modifier : ValueModifiers)
 	{
-		const FInv_LabeledValueFragment& LabeledValueFragment = Modifier.Get();
+		const auto& LabeledValueFragment = Modifier.Get();
 		LabeledValueFragment.ApplyToCompositeWidget(Widget);
 	}
 }
 
-void FInv_UsableHealthPotion::OnUsed(APlayerController* PlayerController) const
+void FInv_HealthModifier::OnUsed(APlayerController* PlayerController)
 {
 	const FString Msg = FString::Printf(TEXT("Used Health Potion: +%dHP"), static_cast<int32>(GetValue()));
 	if (GEngine)
@@ -40,10 +55,27 @@ void FInv_UsableHealthPotion::OnUsed(APlayerController* PlayerController) const
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
 
-void FInv_UsableManaPotion::OnUsed(APlayerController* PlayerController) const
+void FInv_ManaModifier::OnUsed(APlayerController* PlayerController)
 {
 	const FString Msg = FString::Printf(TEXT("Used Mana Potion: +%dMP"), static_cast<int32>(GetValue()));
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Cyan, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
+
+void FInv_StrengthModifier::OnUsed(APlayerController* PlayerController)
+{
+	const FString Msg = FString::Printf(TEXT("Strength Modified: +%d Strength Gained"), static_cast<int32>(GetValue()));
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Green, FString::Printf(TEXT("%s"), *Msg));
+	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
+}
+
+void FInv_StrengthModifier::OnUnUsed(APlayerController* PlayerController)
+{
+	const FString Msg = FString::Printf(TEXT("Strength Modified: -%d Strength Lost"), static_cast<int32>(GetValue()));
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Red, FString::Printf(TEXT("%s"), *Msg));
+	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
+}
+

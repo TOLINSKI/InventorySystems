@@ -4,31 +4,22 @@
 #include "Widgets/Item/Inv_ItemWidget.h"
 
 
-FReply UInv_ItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+void UInv_ItemWidget::NativePreConstruct()
 {
-	OnItemClicked.Broadcast(this, InMouseEvent);
+	Super::NativePreConstruct();
 	
-	return FReply::Handled();
-}
-
-FReply UInv_ItemWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-	// if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-	// {
-	// 	OnItemUnclicked.Broadcast(this, InMouseEvent);
-	// }
-	return FReply::Unhandled();
+	SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void UInv_ItemWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	bIsMouseInside = true;
-	OnItemBeginHovering.Broadcast(this, InMouseEvent);
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	OnItemBeginHover.Broadcast(this);
 }
 
 void UInv_ItemWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
-	bIsMouseInside = false;
-	OnItemEndHovering.Broadcast(this, InMouseEvent);
+	Super::NativeOnMouseLeave(InMouseEvent);
+	OnItemEndHover.Broadcast(this);
 }
 

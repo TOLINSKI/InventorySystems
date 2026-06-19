@@ -13,14 +13,24 @@ UCLASS()
 class INVENTORY_API UInv_EquippedGridSlot : public UInv_GridSlot
 {
 	GENERATED_BODY()
-	
+
 protected:
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
-	FEquippedGridSlotEvent EquippedGridSlotClicked;
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
+	void SetItemWidget(UUserWidget* Widget);
+	
+public:
+	FEquippedGridSlotEvent OnEquipSlotClicked;
+	FEquippedGridSlotEvent OnEquipSlotUnClicked;
+	
+	void EquipItem(FInv_GridItem& EquippableGridItem);
+	FInv_GridItem* UnequipItem();
+	
+	const FGameplayTag& GetEquipmentTag() const { return EquipmentTag; }
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories = "Inventory.Equipment"))

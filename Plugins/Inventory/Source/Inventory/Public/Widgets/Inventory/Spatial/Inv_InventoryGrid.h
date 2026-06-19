@@ -41,7 +41,15 @@ public:
 	UInv_InventoryItem* GetGrabbedItem() const;
 	
 	UFUNCTION()
-	void ReturnGrabbedItem();
+	void PlaceGrabbedItemOnGrid();
+
+	void StopGrabbing();
+	
+	void StartGrabbing(FInv_GridItem* ItemWidget);
+	
+	void StartGrabbing(const FInv_GridItem& GridItem);
+	
+	void RemoveGridItem(const FInv_GridItem& GridItem);
 	
 protected:
 	virtual void NativePreConstruct() override;
@@ -79,7 +87,7 @@ protected:
 	
 	UPROPERTY(BlueprintReadWrite, Category="Inventory", meta = (BindWidget))
 	TObjectPtr<UGridPanel> GridPanel_Items; 
-	
+
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UInv_GridSlot>> GridSlots;
@@ -101,13 +109,12 @@ private:
 	
 	UInv_ItemWidget* CreateItemWidget(const FInv_GridFragment* GridFragment, const FInv_IconFragment* IconFragment);
 	
-	void SetGridSlotsStateInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D);
+	void SetGridItemOnSlots(FInv_GridItem& GridItem);
+	void ResetGridItemFromSlots(FInv_GridItem& GridItem);
 	
-	void PlaceOnGrid(const FInv_GridItem& GridItem);
+	void SetGridSlotsAvailabilityInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D);
 	
 	void Stack(const FInv_SlotAvailability& SlotAvailability);
-	
-	void RemoveGridItem(const FInv_GridItem& GridItem);
 	
 	UFUNCTION()
 	void AddItem(UInv_InventoryItem* Item);
@@ -117,18 +124,27 @@ private:
 	
 	int32 GetItemWidgetIndex(const UUserWidget* ItemWidget);
 
-	UFUNCTION()
-	void OnItemClicked(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-	
 	void ExchangeStacks(FInv_GridItem& Source, FInv_GridItem& TargetItem);
 	
 	void HidePopUpDescription();
 
 	UFUNCTION()
-	void OnItemBeginHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	void OnGridSlotPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent);
 	
 	UFUNCTION()
-	void OnItemEndHovering(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	void OnGridSlotBeginHover(UInv_GridSlot* GridSlot);
+	
+	UFUNCTION()
+	void OnGridSlotEndHover(UInv_GridSlot* GridSlot);
+
+	UFUNCTION()
+	void OnItemPressed(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnItemBeginHover(UInv_ItemWidget* ItemWidget);
+	
+	UFUNCTION()
+	void OnItemEndHover(UInv_ItemWidget* ItemWidget);
 	
 	bool CanFitRange(int32 Index, const FIntPoint& Range2D) const;
 	
@@ -167,7 +183,7 @@ private:
 	FInv_GridPopUp PopUpMenu;
 	
 	void CreatePopUpMenu(FInv_GridItem& GridItem);
-	
+
 	UFUNCTION()
 	void OnPopUpMenuSplitAction(int32 SplitAmount);
 	
@@ -190,4 +206,6 @@ private:
 	
 	FTimerHandle DescriptionTimer;
 	// End Grid Pop Up Description
+	
+	UInv_GridSlot* GetHoveredGridSlot() const;
 };

@@ -114,7 +114,7 @@ void UInv_InventoryComponent::Server_UseItem_Implementation(UInv_InventoryItem* 
 	}
 	
 	// Technically an item that gets used must have a usable fragment
-	if (const FInv_UsableFragment* UsableFrag = Item->GetItemSpec().GetFragment<FInv_UsableFragment>())
+	if (FInv_UsableFragment* UsableFrag = Item->GetMutableItemSpec().GetMutableFragment<FInv_UsableFragment>())
 	{
 		for (int32 i = 0; i < Amount; i++)
 		{

@@ -11,6 +11,8 @@ class UWidgetSwitcher;
 class UImage;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInv_GridSlotAvailabilityChanged, EInv_GridSlotState, Availability);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInv_GridSlotPressEvent, UInv_GridSlot*, GridSlot, const FPointerEvent&, InMouseEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInv_GridSlotEvent, UInv_GridSlot*, GridSlot);
 
 UCLASS(BlueprintType, Blueprintable)
 class INVENTORY_API UInv_GridSlot : public UUserWidget
@@ -19,6 +21,11 @@ class INVENTORY_API UInv_GridSlot : public UUserWidget
 
 protected:
 	virtual void NativePreConstruct() override;
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
 	
 public:
 	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
@@ -26,9 +33,27 @@ public:
 	
 	bool IsOccupied() const;
 	
-	void SetGridSlotState(EInv_GridSlotState State);
+	EInv_GridSlotState GetGridSlotAvailability();
+	
+	void SetGridSlotAvailability(EInv_GridSlotState Availability);
 	
 	void SetSlotSize(FIntPoint Size);
+	
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FInv_GridSlotPressEvent OnGridSlotPressed;
+	
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FInv_GridSlotPressEvent OnGridSlotUnPressed;
+	
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FInv_GridSlotEvent OnGridSlotBeginHover;
+	
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FInv_GridSlotEvent OnGridSlotEndHover;
+	
+	void ResetGridItem() { GridItem = nullptr; }
+	void SetGridItem(FInv_GridItem* InGridItem) { GridItem = InGridItem; }
+	FInv_GridItem* GetGridItem() const { return GridItem; }
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="Inventory")
@@ -41,7 +66,7 @@ protected:
 	
 	UPROPERTY(BlueprintAssignable, Category="Events")
 	FInv_GridSlotAvailabilityChanged OnGridSlotAvailabilityChanged;
-	
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_GridSlot;
@@ -57,4 +82,6 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	FSlateBrush Brush_Disabled;
+	
+	FInv_GridItem* GridItem;
 };

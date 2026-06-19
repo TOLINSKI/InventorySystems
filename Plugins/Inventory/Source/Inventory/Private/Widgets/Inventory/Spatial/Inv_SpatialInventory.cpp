@@ -4,8 +4,14 @@
 #include "Widgets/Inventory/Spatial/Inv_SpatialInventory.h"
 
 #include "Inventory.h"
+#include "Blueprint/WidgetTree.h"
 #include "Components/WidgetSwitcher.h"
+#include "Items/Inv_InventoryItem.h"
+#include "Items/Inv_ItemTags.h"
 #include "Items/Components/Inv_ItemComponent.h"
+#include "Items/Fragments/Inv_FragmentTags.h"
+#include "Widgets/BxWidgetUtils.h"
+#include "Widgets/Inventory/GridSlots/Inv_EquippedGridSlot.h"
 #include "Widgets/Inventory/Spatial/Inv_InventoryGrid.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
@@ -23,6 +29,15 @@ void UInv_SpatialInventory::NativeOnInitialized()
 	Grid_Equippables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
 	Grid_Consumables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
 	Grid_Craftables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
+	
+	WidgetTree->ForEachWidget([this](UWidget* Widget)
+	{
+		if (UInv_EquippedGridSlot* EquipSlot = Cast<UInv_EquippedGridSlot>(Widget))
+		{
+			EquipSlot->OnEquipSlotClicked.AddDynamic(this, &ThisClass::OnEquipSlotClicked);
+			EquipSlot->OnEquipSlotUnClicked.AddDynamic(this, &ThisClass::OnEquipSlotUnClicked);
+		}
+	});
 	
 	SwitchGridCategory(EInv_ItemCategory::Equippable);
 }
@@ -44,7 +59,7 @@ FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry,
 		else
 		{
 			// Handle returning or stacking the item in the inventory
-			GetActiveGrid()->ReturnGrabbedItem();
+			GetActiveGrid()->PlaceGrabbedItemOnGrid();
 		}
 		
 		GrabbedGridItem = nullptr;
@@ -60,6 +75,40 @@ void UInv_SpatialInventory::OnGridBeginGrabItem(FInv_GridItem& GridItem)
 	GrabbedGridItem = &GridItem;
 	GetOwningPlayer()->SetInputMode(FInputModeUIOnly());
 	SetFocus();
+}
+
+void UInv_SpatialInventory::OnEquipSlotClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag)
+{
+	// ???
+}
+
+void UInv_SpatialInventory::OnEquipSlotUnClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag)
+{
+	if (!CanEquipGrabbedItem(EquipSlot)) { return; }
+
+	// Copy grid item and remove from original grid
+	FInv_GridItem& EquippedGridItem = EquippedGridItems.Add_GetRef(*GrabbedGridItem);
+	GetActiveGrid()->StopGrabbing();
+	GetActiveGrid()->RemoveGridItem(*GrabbedGridItem);
+	GrabbedGridItem = nullptr;
+	
+	// Handle newly copied grid item
+	EquippedGridItem.ResetArrayIndex(INDEX_NONE);
+	EquipSlot->EquipItem(EquippedGridItem);
+	
+	GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+	
+	ForceLayoutPrepass();
+	
+	// EquippedGridItem.GetItemWidget()->ForceLayoutPrepass();
+	UE_LOG(LogInventory, Warning, TEXT("0. Widget Positon After Equip Function: %s"), *UBxWidgetUtils::GetCachedWidgetPosition(EquippedGridItem.GetItemWidget()).ToString());
+}
+
+bool UInv_SpatialInventory::CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const
+{
+	return !EquippedSlot->IsOccupied() 
+			&& GrabbedGridItem 
+			&& GrabbedGridItem->GetItemTag().MatchesTag(EquippedSlot->GetEquipmentTag());
 }
 
 FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const

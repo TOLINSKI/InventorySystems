@@ -85,12 +85,12 @@ void FInv_GridGrabQuery::UpdateGrabbedItemPosition(const FVector2D& MousePositio
 	// UE_LOG(LogInventory, Display, TEXT("Current Widget Position: %s"), *NewWidgetPosition.ToString());
 	// UE_LOG(LogInventory, Display, TEXT("-------------------------------------------------------------"));
 	// UE_LOG(LogInventory, Display, TEXT("Position Relative to Mouse: %s"), *NewPosition.ToString());
-	// UE_LOG(LogInventory, Display, TEXT("Position From GetWidgetPosition(): %s"), *UBxWidgetUtils::GetWidgetPosition(Widget).ToString());
-	// UE_LOG(LogInventory, Display, TEXT("Bottom Right From GetWidgetBottomRight(): %s"), *UBxWidgetUtils::GetWidgetBottomRight(Widget).ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Position From GetCachedWidgetPosition(): %s"), *UBxWidgetUtils::GetCachedWidgetPosition(Widget).ToString());
+	// UE_LOG(LogInventory, Display, TEXT("Bottom Right From GetCachedWidgetBottomRight(): %s"), *UBxWidgetUtils::GetCachedWidgetBottomRight(Widget).ToString());
 	// UE_LOG(LogInventory, Display, TEXT("==========================================================="));
 }
 
-void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition)
+void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& WidgetPosition, const FVector2D& MouseCursorPosition)
 {
 	ResetQuery();
 	bIsGrabbing = true;
@@ -98,8 +98,7 @@ void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2
 	GrabbedItem = &InGridItem;
 	LastPossibleIndex = GrabbedItem->GetIndex();
 
-	UInv_ItemWidget* Widget = InGridItem.GetItemWidget();
-	InitWidgetPosition = UBxWidgetUtils::GetWidgetPosition(Widget);
+	InitWidgetPosition = WidgetPosition;
 	InitMousePosition = MouseCursorPosition;
 	DistMouseToWidget = InitWidgetPosition - InitMousePosition;
 }

@@ -5,7 +5,7 @@
 #include "Inv_ItemFragment.h"
 #include "Inv_LabeledValueFragment.generated.h"
 
-USTRUCT(BlueprintType, DisplayName = "Labeled Value  Fragment", meta = (Hidden))
+USTRUCT(BlueprintType, DisplayName = "Labeled Value  Fragment")
 struct INVENTORY_API FInv_LabeledValueFragment : public FInv_ItemFragment 
 {
 	GENERATED_BODY()
@@ -21,16 +21,16 @@ public:
 	
 	float GetValue() const { return Value;};
 	
+protected:
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bRandomizeValue{ false };
+	
 private:
-
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	FText Label { FText::FromString("Label")};
 
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (EditCondition = "!bRandomizeValue"))
 	float Value{0.f};
-
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	bool bRandomizeValue{ false };
 	
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	float Min{0};

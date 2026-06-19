@@ -12,6 +12,7 @@ namespace Inventory
 		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Icon, "Inventory.Fragments.Icon", "Tag for Inventory Icon Fragment");
 		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Stack, "Inventory.Fragments.Stack", "Tag for Inventory Stack Fragment");
 		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Usable, "Inventory.Fragments.Usable", "Tag for Inventory Usable Fragments");
+		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Equippable, "Inventory.Fragments.Equippable", "Tag for Inventory Equippable Fragments");
 		UE_DEFINE_GAMEPLAY_TAG_COMMENT(Description, "Inventory.Fragments.Description", "Tag for Inventory Description Fragment");
 		UE_DEFINE_GAMEPLAY_TAG_COMMENT(LabeledValue, "Inventory.Fragments.LabeledValue", "Tag for Inventory LabeledValue Fragment");
 	}

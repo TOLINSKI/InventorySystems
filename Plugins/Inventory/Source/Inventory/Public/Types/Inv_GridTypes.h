@@ -7,6 +7,7 @@
 
 #include "Inv_GridTypes.generated.h"
 
+class UInv_EquippedGridSlot;
 struct FGameplayTag;
 class UInv_ItemPopUp;
 class UInv_ItemWidget;
@@ -64,7 +65,13 @@ struct FInv_GridItem
 {
 	GENERATED_BODY()
 	
-	FInv_GridItem() = default;
+	FInv_GridItem() {};
+	
+	FInv_GridItem& operator=(const FInv_GridItem&) = default; // Assignment Operator: 
+	FInv_GridItem(const FInv_GridItem&) = default;
+	
+	FInv_GridItem(FInv_GridItem&&) = default; // Move Constructor:
+	FInv_GridItem& operator=(FInv_GridItem&&) = default; // Move Assignment Operator:  
 	
 	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex, const FIntPoint& InGridSpan, int32 InStackCount, int32 InMaxStackCount);
 	
@@ -104,6 +111,9 @@ struct FInv_GridItem
 	
 	FGameplayTag GetItemTag() const;
 	
+	void SetEquipSlot(UInv_EquippedGridSlot* EquippedGridSlot) { LastEquipSlot = EquippedGridSlot; }
+	UInv_EquippedGridSlot* GetEquippedGridSlot() const { return LastEquipSlot; }
+	
 private:
 	TWeakObjectPtr<UInv_InventoryItem> Item;
 	
@@ -119,6 +129,9 @@ private:
 	int32 MaxStackCount { 1 };
 	
 	void UpdateStackCountUI() const;
+
+	UPROPERTY()
+	TObjectPtr<UInv_EquippedGridSlot> LastEquipSlot;
 };
 
 USTRUCT()
@@ -130,9 +143,11 @@ struct FInv_GridGrabQuery
 	
 	bool IsGrabbing() const { return bIsGrabbing; }
 	
+	bool HasFoundPossibleGridIndex() const { return LastPossibleIndex != INDEX_NONE; }
+	
 	void UpdateGrabbedItemPosition(const FVector2D& MousePosition) const;
 	
-	void StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& MouseCursorPosition);
+	void StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& WidgetPosition, const FVector2D& MouseCursorPosition);
 	
 	void ResetQuery();
 

@@ -10,6 +10,7 @@
 
 #include "Inv_SpatialInventory.generated.h"
 
+class UInv_EquippedGridSlot;
 class UWidgetSwitcher;
 class UInv_InventoryGrid;
 class UInv_ItemComponent;
@@ -33,6 +34,7 @@ public:
 	virtual FInv_SlotAvailabilityResult GetGridAvailability(UInv_ItemComponent* ItemComponent) const override;
 	// End UInv_InventoryWidgetBase Interface
 	
+protected:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void SwitchGridCategory(EInv_ItemCategory Category);
 	
@@ -68,4 +70,15 @@ private:
 	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
 	
 	FInv_GridItem* GrabbedGridItem;
+	
+	bool CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const;
+	
+	UFUNCTION()
+	void OnEquipSlotClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
+	
+	UFUNCTION()
+	void OnEquipSlotUnClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
+	
+	UPROPERTY()
+	TArray<FInv_GridItem> EquippedGridItems; 
 };

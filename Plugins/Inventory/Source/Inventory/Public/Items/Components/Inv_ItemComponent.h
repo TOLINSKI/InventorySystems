@@ -31,6 +31,8 @@ public:
 	void SetItemSpec(FInv_ItemSpec ItemSpecCopy);
 	
 protected:
+	virtual void OnRegister() override;
+	
 	UPROPERTY(Replicated, EditAnywhere, Category="Inventory")
 	FInv_ItemSpec ItemSpec;
 	

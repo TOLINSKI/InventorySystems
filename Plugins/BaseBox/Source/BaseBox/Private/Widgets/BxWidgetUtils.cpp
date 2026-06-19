@@ -7,7 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
-FVector2D UBxWidgetUtils::GetWidgetPosition(UWidget* Widget)
+FVector2D UBxWidgetUtils::GetCachedWidgetPosition(UWidget* Widget)
 {
 	const FVector2D AbsoluteDesktopCoordinate = Widget->GetCachedGeometry().GetAbsolutePosition();
 	FVector2D PixelPosition;
@@ -16,7 +16,7 @@ FVector2D UBxWidgetUtils::GetWidgetPosition(UWidget* Widget)
 	return ViewportPosition;
 }
 
-FVector2D UBxWidgetUtils::GetWidgetCenter(UWidget* Widget)
+FVector2D UBxWidgetUtils::GetCachedWidgetCenter(UWidget* Widget)
 {
 	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
 	const FVector2D AbsoluteSize = Widget->GetCachedGeometry().GetAbsoluteSize();
@@ -27,7 +27,7 @@ FVector2D UBxWidgetUtils::GetWidgetCenter(UWidget* Widget)
 	return ViewportPosition;
 }
 
-FVector2D UBxWidgetUtils::GetWidgetBottomRight(UWidget* Widget)
+FVector2D UBxWidgetUtils::GetCachedWidgetBottomRight(UWidget* Widget)
 {
 	const FVector2D AbsolutePosition = Widget->GetCachedGeometry().GetAbsolutePosition();
 	const FVector2D AbsoluteSize = Widget->GetCachedGeometry().GetAbsoluteSize();
@@ -38,20 +38,11 @@ FVector2D UBxWidgetUtils::GetWidgetBottomRight(UWidget* Widget)
 	return ViewportPosition;
 }
 
-bool UBxWidgetUtils::IsPositionBoundByWidget(const FVector2D& ViewportPosition, UWidget* Widget)
+bool UBxWidgetUtils::IsPositionBoundByCachedWidget(const FVector2D& ViewportPosition, UWidget* Widget)
 {
-	const FVector2D WidgetTopLeft = GetWidgetPosition(Widget);
-	const FVector2D WidgetBottomRight = GetWidgetBottomRight(Widget);
+	const FVector2D WidgetTopLeft = GetCachedWidgetPosition(Widget);
+	const FVector2D WidgetBottomRight = GetCachedWidgetBottomRight(Widget);
 	return ViewportPosition.ComponentwiseAllGreaterOrEqual(WidgetTopLeft) && ViewportPosition.ComponentwiseAllLessOrEqual(WidgetBottomRight);
-}
-
-bool UBxWidgetUtils::IsWidgetBoundByWidget(UWidget* SmallerWidget, UWidget* BiggerWidget)
-{
-	const FVector2D SmallerWidgetTopLeft = GetWidgetPosition(SmallerWidget);
-	const FVector2D SmallerWidgetBottomRight = GetWidgetBottomRight(SmallerWidget);
-	const FVector2D BiggerWidgetTopLeft = GetWidgetPosition(BiggerWidget);
-	const FVector2D BiggerWidgetBottomRight = GetWidgetBottomRight(BiggerWidget);
-	return SmallerWidgetTopLeft.ComponentwiseAllGreaterOrEqual(BiggerWidgetTopLeft) && SmallerWidgetBottomRight.ComponentwiseAllLessOrEqual(BiggerWidgetBottomRight);
 }
 
 FVector2D UBxWidgetUtils::GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition)

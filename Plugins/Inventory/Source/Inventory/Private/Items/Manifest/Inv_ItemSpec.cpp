@@ -40,6 +40,7 @@ void FInv_ItemSpec::ClearFragments()
 void FInv_ItemSpec::SpawnPickupItem(const UObject* WorldContextObject, const FVector& Location,
                               const FRotator& Rotation, int32 StackCount) const
 {
+	
 	AActor* SpawnedItem = WorldContextObject->GetWorld()->SpawnActor(ItemActorClass, &Location, &Rotation);
 	check(IsValid(SpawnedItem));
 	

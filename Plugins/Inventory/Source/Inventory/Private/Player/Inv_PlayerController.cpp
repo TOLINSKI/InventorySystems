@@ -93,7 +93,9 @@ void AInv_PlayerController::OnBeginTrackingActor(AActor* Actor)
 	HUDWidget->ShowItemMessage(ItemComp->GetPickupMessage());
 	
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
-	if (!ensure(IsValid(Highlightable))) return;
+	// if (!ensure(IsValid(Highlightable))) return;
+	if (!IsValid(Highlightable)) return;
+	
 	IInv_Highlightable::Execute_Highlight(Highlightable);
 }
 
@@ -104,6 +106,8 @@ void AInv_PlayerController::OnEndTrackingActor(AActor* Actor)
 	if (!IsValid(Actor)) return;
 	
 	UActorComponent* Highlightable = Actor->FindComponentByInterface(UInv_Highlightable::StaticClass());
+	// if (!ensure(IsValid(Highlightable))) return;
 	if (!IsValid(Highlightable)) return;
+	
 	IInv_Highlightable::Execute_UnHighlight(Highlightable);
 }

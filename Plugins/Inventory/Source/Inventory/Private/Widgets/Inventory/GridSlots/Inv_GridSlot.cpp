@@ -5,6 +5,7 @@
 
 #include "Components/Image.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagement/Inv_InventoryStatics.h"
 
 void UInv_GridSlot::NativePreConstruct()
 {
@@ -13,24 +14,56 @@ void UInv_GridSlot::NativePreConstruct()
 	Image_GridSlot->SetBrush(Brush_Unoccupied);
 }
 
+void UInv_GridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotBeginHover.Broadcast(this);
+}
+
+void UInv_GridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotEndHover.Broadcast(this);
+}
+
+FReply UInv_GridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotPressed.Broadcast(this, InMouseEvent);
+	return FReply::Handled();
+}
+
+FReply UInv_GridSlot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotUnPressed.Broadcast(this, InMouseEvent);
+	return FReply::Handled();
+}
+
 bool UInv_GridSlot::IsOccupied() const
 {
 	const FSlateBrush& Brush = Image_GridSlot->GetBrush(); 
 	return Brush == Brush_Occupied || Brush == Brush_Disabled;
 }
 
-void UInv_GridSlot::SetGridSlotState(EInv_GridSlotState State)
+EInv_GridSlotState UInv_GridSlot::GetGridSlotAvailability()
 {
-	switch (State)
+	if (Image_GridSlot->GetBrush() == Brush_Unoccupied) return EInv_GridSlotState::Unoccupied;
+	if (Image_GridSlot->GetBrush() == Brush_Occupied) return EInv_GridSlotState::Occupied;
+	if (Image_GridSlot->GetBrush() == Brush_Selected) return EInv_GridSlotState::Selected;
+	if (Image_GridSlot->GetBrush() == Brush_Disabled) return EInv_GridSlotState::Disabled;
+	return EInv_GridSlotState::Disabled;
+}
+
+void UInv_GridSlot::SetGridSlotAvailability(EInv_GridSlotState Availability)
+{
+	switch (Availability)
 	{
 	case EInv_GridSlotState::Occupied: Image_GridSlot->SetBrush(Brush_Occupied); break;
 	case EInv_GridSlotState::Unoccupied: Image_GridSlot->SetBrush(Brush_Unoccupied); break;
 	case EInv_GridSlotState::Disabled: Image_GridSlot->SetBrush(Brush_Disabled); break;
-	case EInv_GridSlotState::Selected: Image_GridSlot->SetBrush(Brush_Selected); break;
+	case EInv_GridSlotState::Selected: 
+		Image_GridSlot->SetBrush(Brush_Selected); break;
 	default: break;
 	}
 	
-	OnAvailabilityChanged(State);
+	OnAvailabilityChanged(Availability);
 }
 
 void UInv_GridSlot::SetSlotSize(FIntPoint Size)
