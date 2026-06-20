@@ -27,7 +27,7 @@ public:
 	FEquippedGridSlotEvent OnEquipSlotClicked;
 	FEquippedGridSlotEvent OnEquipSlotUnClicked;
 	
-	void EquipItem(FInv_GridItem& EquippableGridItem);
+	void EquipGridItem(FInv_GridItem& InGridItem);
 	FInv_GridItem* UnequipItem();
 	
 	const FGameplayTag& GetEquipmentTag() const { return EquipmentTag; }

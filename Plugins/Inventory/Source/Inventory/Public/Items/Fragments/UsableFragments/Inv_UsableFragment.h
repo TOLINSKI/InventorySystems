@@ -38,6 +38,9 @@ struct INVENTORY_API FInv_UsableFragment : public FInv_ItemFragment
 private:
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FInv_UsableModifier>> ValueModifiers;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
+	bool bCanOnlyUseOnce { false };
 };
 
 USTRUCT(BlueprintType, DisplayName="Health Modifier")

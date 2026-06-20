@@ -4,13 +4,6 @@
 #include "Widgets/Item/Inv_ItemWidget.h"
 
 
-void UInv_ItemWidget::NativePreConstruct()
-{
-	Super::NativePreConstruct();
-	
-	SetVisibility(ESlateVisibility::HitTestInvisible);
-}
-
 void UInv_ItemWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);

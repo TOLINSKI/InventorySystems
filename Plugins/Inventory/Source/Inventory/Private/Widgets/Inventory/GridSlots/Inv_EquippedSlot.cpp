@@ -1,47 +1,17 @@
 ﻿// Copyright Chaos Box Games 2026, All rights reserved.
 
 
-#include "InventoryManagement/Inv_InventoryStatics.h"
-#include "Items/Inv_InventoryItem.h"
-#include "Items/Fragments/Inv_GridFragment.h"
-#include "Items/Fragments/Inv_IconFragment.h"
-#include "Widgets/Inv_WidgetUtils.h"
 #include "Widgets/Inventory/GridSlots/Inv_EquippedGridSlot.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 
 void UInv_EquippedGridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	// if (GetGridItem())
-	// {
-	// 	SetCursor(EMouseCursor::GrabHand);
-	// 	SetGridSlotAvailability(EInv_GridSlotState::Selected);
-	// }
-	//
-	// UInv_InventoryItem* InventoryItem = UInv_InventoryStatics::GetGrabbedItem(GetOwningPlayer());
-	// if (!IsValid(InventoryItem)) return;
-	//
-	// if (InventoryItem->GetItemTag().MatchesTag(EquipmentTag))
-	// {
-	// 	SetGridSlotAvailability(EInv_GridSlotState::Selected);
-	// }
+	OnGridSlotBeginHover.Broadcast(this);
 }
 
 void UInv_EquippedGridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
-	// if (EquippedGridItem)
-	// {
-	// 	SetGridSlotAvailability(EInv_GridSlotState::Occupied);
-	// }
-	//
-	// if (IsOccupied()) return;
-	//
-	// UInv_InventoryItem* InventoryItem = UInv_InventoryStatics::GetGrabbedItem(GetOwningPlayer());
-	// if (!IsValid(InventoryItem)) return;
-	//
-	// if (InventoryItem->GetItemTag().MatchesTag(EquipmentTag))
-	// {
-	// 	SetGridSlotAvailability(EInv_GridSlotState::Unoccupied);
-	// }
+	OnGridSlotEndHover.Broadcast(this);
 }
 	
 FReply UInv_EquippedGridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -51,10 +21,11 @@ FReply UInv_EquippedGridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometr
 		OnEquipSlotClicked.Broadcast(this, EquipmentTag);
 	}
 	
-	 // if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
-	 // {
-	 // 	OnEquipSlotClicked.Broadcast(this, EquipmentTag);
-	 // }
+	// TODO Right mouse click?
+	// if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	// {
+	// 	OnEquipSlotClicked.Broadcast(this, EquipmentTag);
+	// }
 	
 	return FReply::Handled();
 }
@@ -69,25 +40,25 @@ FReply UInv_EquippedGridSlot::NativeOnMouseButtonUp(const FGeometry& InGeometry,
 	return FReply::Handled();
 }
 
-void UInv_EquippedGridSlot::EquipItem(FInv_GridItem& EquippableGridItem)
+void UInv_EquippedGridSlot::EquipGridItem(FInv_GridItem& InGridItem)
 {
-	// SetGridSlotAvailability(EInv_GridSlotState::Occupied);
-	//
-	// EquippedGridItem = &EquippableGridItem;
-	// EquippableGridItem.SetEquipSlot(this);
-	//
-	// UUserWidget* ItemWidget = EquippableGridItem.GetItemWidget();
-	// ItemWidget->SetVisibility(ESlateVisibility::Visible);
-	// SetItemWidget(ItemWidget);
+	// Handle UI
+	SetGridSlotAvailability(EInv_GridSlotState::Occupied);
+	SetItemWidget(InGridItem.GetItemWidget());
+
+	// Handle Grid Item
+	SetGridItem(&InGridItem);
+	InGridItem.SetEquipSlot(this);
 }
 
 FInv_GridItem* UInv_EquippedGridSlot::UnequipItem()
 {
-	// SetGridSlotAvailability(EInv_GridSlotState::Unoccupied);
-	// SetItemWidget(nullptr);
-	//
-	// FInv_GridItem* Temp = EquippedGridItem;
-	// EquippedGridItem = nullptr;
-	// return Temp; 
-	return GetGridItem();
+	// Handle UI
+	SetGridSlotAvailability(EInv_GridSlotState::Unoccupied);
+	SetItemWidget(nullptr);
+	
+	// Return Grid Item
+	FInv_GridItem* Temp = GetGridItem();
+	SetGridItem(nullptr);
+	return Temp; 
 }

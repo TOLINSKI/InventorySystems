@@ -28,7 +28,9 @@ protected:
 	virtual void NativeOnInitialized() override;
 	
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	
+	void PlaceGrabbedItemBackOnGrid();
+	void UnequipGrabbedItem();
+
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
 public:
@@ -70,18 +72,28 @@ private:
 	UInv_InventoryGrid* GetGridByCategory(EInv_ItemCategory Category) const;
 	
 	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
-	
-	void OnGridEndGrabItem();
+	void HandleEndGrabbingPreviouslyEquippedItem(bool bItemPlacedOnGrid);
+	void HandlePreviouslyEquippedItem(bool bItemPlacedOnGrid);
+
+	void OnGridEndGrabItem(bool bItemPlacedOnGrid);
 	
 	FInv_GridItem* GrabbedGridItem;
 	
 	bool CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const;
 	
 	UFUNCTION()
-	void OnEquipSlotClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
+	void OnEquipSlotPressed(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
+	void EquipFreshItem(UInv_EquippedGridSlot* EquipSlot);
+	void EquipPreviouslyEquippedItem(UInv_EquippedGridSlot* ExistingEquipSlot);
+
+	UFUNCTION()
+	void OnEquipSlotUnPressed(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
 	
 	UFUNCTION()
-	void OnEquipSlotUnClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
+	void OnEquipSlotBeginHover(UInv_GridSlot* EquipSlot);
+
+	UFUNCTION()
+	void OnEquipSlotEndHover(UInv_GridSlot* EquipSlot);
 	
 	UPROPERTY()
 	TArray<FInv_GridItem> EquippedGridItems; 

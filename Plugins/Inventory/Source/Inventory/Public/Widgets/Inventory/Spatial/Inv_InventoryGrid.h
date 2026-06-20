@@ -22,8 +22,8 @@ class UInv_InventoryItem;
 class UInv_GridSlot;
 class UGridPanel;
 
-DECLARE_DELEGATE_OneParam(FInv_GridItemEvent, FInv_GridItem& Item);
-DECLARE_DELEGATE(FInv_GridEvent);
+DECLARE_DELEGATE_OneParam(FInv_GridItemEvent, FInv_GridItem& /** GridItem */);
+DECLARE_DELEGATE_OneParam(FInv_GridGrabbedItemPlavedEvent, bool /** bItemPlacedOnGrid */);
 
 UCLASS()
 class INVENTORY_API UInv_InventoryGrid : public UUserWidget
@@ -37,14 +37,14 @@ public:
 	
 	FInv_GridItemEvent OnGridBeginGrabItem;
 	
-	FInv_GridEvent OnGridEndGrabItem;
+	FInv_GridGrabbedItemPlavedEvent OnGridEndGrabItem;
 	
 	void DropGrabbedItem();
 	
 	UInv_InventoryItem* GetGrabbedItem() const;
 	
 	UFUNCTION()
-	void PlaceGrabbedItemOnGrid();
+	bool TryPlaceGrabbedItemOnGrid();
 
 	void StopGrabbing();
 	
@@ -55,6 +55,10 @@ public:
 	void HidePossibleGridSlotsForGrabbedItem();
 	
 	void ShowPossibleGridSlotsForGrabbedItem();
+	
+	void SetDescriptionPopUpTimer(FInv_GridItem* GridItem);
+	
+	void HidePopUpDescription();
 	
 protected:
 	virtual void NativePreConstruct() override;
@@ -132,29 +136,18 @@ private:
 
 	void ExchangeStacks(FInv_GridItem& Source, FInv_GridItem& TargetItem);
 	
-	void HidePopUpDescription();
-
 	UFUNCTION()
 	void OnGridSlotPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent);
 	
 	UFUNCTION()
 	void OnGridSlotUnPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent);
-	
+
 	UFUNCTION()
 	void OnGridSlotBeginHover(UInv_GridSlot* GridSlot);
 	
 	UFUNCTION()
 	void OnGridSlotEndHover(UInv_GridSlot* GridSlot);
 
-	UFUNCTION()
-	void OnItemPressed(UInv_ItemWidget* ItemWidget, const FPointerEvent& MouseEvent);
-	
-	UFUNCTION()
-	void OnItemBeginHover(UInv_ItemWidget* ItemWidget);
-	
-	UFUNCTION()
-	void OnItemEndHover(UInv_ItemWidget* ItemWidget);
-	
 	bool CanFitRange(int32 Index, const FIntPoint& Range2D) const;
 	
 	TSet<int32> FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const;
@@ -175,12 +168,15 @@ private:
 	
 	FInv_SlotAvailabilityResult SearchGridForSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
+	UPROPERTY()
 	FInv_GridGrabQuery GrabbedQuery;
 	
 	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget, const FVector2D& MousePosition) const;
 	
 	FIntPoint ViewportPositionToGridCoordinate(const FVector2D& Position);
 
+	int32 ViewportPositionToGridIndex(const FVector2D& Position);
+	
 	FIntPoint GetGridCoordinatesByQuadrant(const FVector2D& WidgetCenter, const FIntPoint& GridSpan, EInv_GridSlotQuadrant Quadrant);
 	
 	UInv_GridSlot* FindGridSlotByIndex(int32 Index);
@@ -193,9 +189,6 @@ private:
 	
 	void CreatePopUpMenu(FInv_GridItem& GridItem);
 
-	UFUNCTION()
-	void OnPopUpMenuSplitAction(int32 SplitAmount);
-	
 	UFUNCTION()
 	void OnPopUpMenuUseAction(int32 UsedAmount);
 	

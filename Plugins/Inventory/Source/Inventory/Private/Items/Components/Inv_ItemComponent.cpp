@@ -38,8 +38,11 @@ void UInv_ItemComponent::SetItemSpec(FInv_ItemSpec ItemSpecCopy)
 void UInv_ItemComponent::OnRegister()
 {
 	Super::OnRegister();
-	
-	GetOwner()->SetReplicates(true);
+
+	if (AActor* ItemActor = GetOwner(); ItemActor->HasAuthority())
+	{
+		ItemActor->SetReplicates(true);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

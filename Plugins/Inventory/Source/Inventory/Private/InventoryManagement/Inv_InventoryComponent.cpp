@@ -106,20 +106,18 @@ void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem*
 void UInv_InventoryComponent::Server_UseItem_Implementation(UInv_InventoryItem* Item, int32 Amount)
 {
 	const int32 TotalAmount = Item->GetTotalAmountInInentory();
-	const int32 NewTotal = FMath::Max(TotalAmount - Amount, 0);
-	Item->SetTotalAmountInInvetory(NewTotal);
-	if (NewTotal == 0)
+	Item->SetTotalAmountInInvetory(FMath::Max(TotalAmount - Amount, 0));
+	if (Item->GetTotalAmountInInentory() == 0)
 	{
 		InventoryArray.RemoveItem(Item);
 	}
 	
 	// Technically an item that gets used must have a usable fragment
-	if (FInv_UsableFragment* UsableFrag = Item->GetMutableItemSpec().GetMutableFragment<FInv_UsableFragment>())
+	FInv_UsableFragment* UsableFrag = Item->GetMutableItemSpec().GetMutableFragment<FInv_UsableFragment>();
+	check(UsableFrag != nullptr);
+	for (int32 i = 0; i < Amount; i++)
 	{
-		for (int32 i = 0; i < Amount; i++)
-		{
-			UsableFrag->OnUsed(OwningPlayer.Get());
-		}
+		UsableFrag->OnUsed(OwningPlayer.Get());
 	}
 }
 

@@ -22,18 +22,9 @@ FInv_GridItem::FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItem
 , MaxStackCount(InMaxStackCount)
 {}
 
-FInv_GridItem::~FInv_GridItem()
-{
-	if (IsValid(ItemWidget))
-	{
-		ItemWidget->RemoveFromParent();
-		ItemWidget = nullptr;
-	}
-}
-
 bool FInv_GridItem::operator==(const FInv_GridItem& Other) const
 {
-	return Other.GetIndex() == GetIndex();
+	return Other.GetIndex() == GetIndex() && Other.GetItemWidget() == GetItemWidget() && Other.GetItem() == GetItem();
 }
 
 void FInv_GridItem::UpdateStackCountUI() const
@@ -71,11 +62,16 @@ FGameplayTag FInv_GridItem::GetItemTag() const
 	return GetItem()->GetItemTag();
 }
 
+bool FInv_GridItem::IsValid() const
+{
+	return ::IsValid(GetItem()) && ::IsValid(GetItemWidget());
+}
+
 void FInv_GridGrabQuery::UpdateGrabbedItemPosition(const FVector2D& MousePosition) const
 {
 	const FVector2D NewPosition = GetRelativeWidgetPosition(MousePosition);
 	
-	UInv_ItemWidget* Widget = GetGridItem()->GetItemWidget();
+	UInv_ItemWidget* Widget = GetGridItem().GetItemWidget();
 	Widget->SetPositionInViewport(NewPosition, false);
 	
 	// UE_LOG(LogInventory, Display, TEXT("Init Grab Position: %s"), *InitMousePosition.ToString());
@@ -95,8 +91,8 @@ void FInv_GridGrabQuery::StartGrabbing(FInv_GridItem& InGridItem, const FVector2
 	ResetQuery();
 	bIsGrabbing = true;
 	
-	GrabbedItem = &InGridItem;
-	LastPossibleIndex = GrabbedItem->GetIndex();
+	GrabbedItem = InGridItem;
+	LastPossibleIndex = GrabbedItem.GetIndex();
 
 	InitWidgetPosition = WidgetPosition;
 	InitMousePosition = MouseCursorPosition;
@@ -107,7 +103,7 @@ void FInv_GridGrabQuery::ResetQuery()
 {
 	LastPossibleIndex = INDEX_NONE;
 	
-	GrabbedItem = nullptr;
+	GrabbedItem = {};
 	
 	StackableGridItem = nullptr;
 	
@@ -123,12 +119,12 @@ void FInv_GridGrabQuery::StopGrabbing()
 
 UUserWidget* FInv_GridGrabQuery::GetWidget() const
 {
-	return GetGridItem()->GetItemWidget();
+	return GetGridItem().GetItemWidget();
 }
 
 void FInv_GridGrabQuery::ResetIndex()
 {
-	SetPossibleIndex(GetGridItem()->GetIndex());
+	SetPossibleIndex(GetGridItem().GetIndex());
 }
 
 FVector2D FInv_GridGrabQuery::GetRelativeWidgetPosition(const FVector2D& MousePosition) const

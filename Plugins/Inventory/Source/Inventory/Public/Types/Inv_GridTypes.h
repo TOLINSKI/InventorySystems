@@ -65,17 +65,9 @@ struct FInv_GridItem
 {
 	GENERATED_BODY()
 	
-	FInv_GridItem() {};
-	
-	FInv_GridItem& operator=(const FInv_GridItem&) = default; // Assignment Operator: 
-	FInv_GridItem(const FInv_GridItem&) = default;
-	
-	FInv_GridItem(FInv_GridItem&&) = default; // Move Constructor:
-	FInv_GridItem& operator=(FInv_GridItem&&) = default; // Move Assignment Operator:  
+	FInv_GridItem() = default;
 	
 	FInv_GridItem(UInv_InventoryItem* InItem, UInv_ItemWidget* InItemWidget, int32 InArrayIndex, const FIntPoint& InGridSpan, int32 InStackCount, int32 InMaxStackCount);
-	
-	~FInv_GridItem();
 	
 	bool operator ==(const FInv_GridItem& Other) const;
 	
@@ -103,7 +95,7 @@ struct FInv_GridItem
 	
 	int32 GetIndex() const { return ArrayIndex; }
 	
-	void ResetArrayIndex(int32 Index) { ArrayIndex = Index; }
+	void SetArrayIndex(int32 Index) { ArrayIndex = Index; }
 	
 	bool IsStackable() const;
 	
@@ -113,6 +105,8 @@ struct FInv_GridItem
 	
 	void SetEquipSlot(UInv_EquippedGridSlot* EquippedGridSlot) { LastEquipSlot = EquippedGridSlot; }
 	UInv_EquippedGridSlot* GetEquippedGridSlot() const { return LastEquipSlot; }
+	
+	bool IsValid() const;
 	
 private:
 	TWeakObjectPtr<UInv_InventoryItem> Item;
@@ -141,13 +135,13 @@ struct FInv_GridGrabQuery
 	
 	FInv_GridGrabQuery() = default;
 	
-	bool IsGrabbing() const { return bIsGrabbing; }
+	void StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& WidgetPosition, const FVector2D& MouseCursorPosition);
+	
+	bool IsGrabbing() const { return bIsGrabbing && GetGridItem().IsValid(); }
 	
 	bool HasFoundPossibleGridIndex() const { return LastPossibleIndex != INDEX_NONE; }
 	
 	void UpdateGrabbedItemPosition(const FVector2D& MousePosition) const;
-	
-	void StartGrabbing(FInv_GridItem& InGridItem, const FVector2D& WidgetPosition, const FVector2D& MouseCursorPosition);
 	
 	void ResetQuery();
 
@@ -157,7 +151,9 @@ struct FInv_GridGrabQuery
 	
 	UUserWidget* GetWidget() const;
 	
-	FInv_GridItem* GetGridItem() const { return GrabbedItem; } 
+	const FInv_GridItem& GetGridItem() const { return GrabbedItem; } 
+	
+	FInv_GridItem& GetMutableGridItem() { return GrabbedItem; }
 	
 	FInv_GridItem* GetStackableGridItem() const { return StackableGridItem; }
 	
@@ -185,7 +181,8 @@ private:
 	
 	int32 LastPossibleIndex { INDEX_NONE };
 	
-	FInv_GridItem* GrabbedItem {};
+	UPROPERTY()
+	FInv_GridItem GrabbedItem;
 	
 	FInv_GridItem* StackableGridItem {};
 	

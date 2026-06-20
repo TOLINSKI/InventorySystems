@@ -6,7 +6,7 @@
 
 void FInv_UsableFragment::OnUsed(APlayerController* PlayerController)
 {
-	if (bIsUsed) return;
+	if (bCanOnlyUseOnce && bIsUsed) return;
 	bIsUsed = true;
 	
 	for (auto& Modifier : ValueModifiers)
@@ -18,7 +18,7 @@ void FInv_UsableFragment::OnUsed(APlayerController* PlayerController)
 
 void FInv_UsableFragment::OnUnUsed(APlayerController* PlayerController)
 {
-	if (!bIsUsed) return;
+	if (bCanOnlyUseOnce && !bIsUsed) return;
 	bIsUsed = false;
 	
 	for (auto& Modifier : ValueModifiers)

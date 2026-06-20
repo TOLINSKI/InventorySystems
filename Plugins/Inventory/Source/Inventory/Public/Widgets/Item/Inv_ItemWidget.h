@@ -17,7 +17,6 @@ class INVENTORY_API UInv_ItemWidget : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
-	virtual void NativePreConstruct() override;
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 	
