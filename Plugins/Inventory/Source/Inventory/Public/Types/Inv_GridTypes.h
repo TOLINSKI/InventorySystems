@@ -171,6 +171,9 @@ struct FInv_GridGrabQuery
 	
 	FVector2D GetRelativeWidgetPosition(const FVector2D& MousePosition) const;
 	
+	bool CanReturnGrabbedItemToGrid() const { return bCanReturnGrabbedItemToGrid; }
+	void SetCanReturnGrabbedItemToGrid(bool bCanReturn) { bCanReturnGrabbedItemToGrid = bCanReturn;}
+	
 private:
 	bool bIsGrabbing { false };
 	
@@ -189,6 +192,8 @@ private:
 	int32 StackableAmount { 0 };
 	
 	TArray<FInv_GridItem*> BlockingGridItems {};
+	
+	bool bCanReturnGrabbedItemToGrid { true };
 };
 
 UENUM()

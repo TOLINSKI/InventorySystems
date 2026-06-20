@@ -23,6 +23,7 @@ class UInv_GridSlot;
 class UGridPanel;
 
 DECLARE_DELEGATE_OneParam(FInv_GridItemEvent, FInv_GridItem& Item);
+DECLARE_DELEGATE(FInv_GridEvent);
 
 UCLASS()
 class INVENTORY_API UInv_InventoryGrid : public UUserWidget
@@ -32,9 +33,11 @@ class INVENTORY_API UInv_InventoryGrid : public UUserWidget
 public:
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 
-	FInv_SlotAvailabilityResult GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
+	FInv_SlotAvailabilityResult SearchGridForSlotAvailability(const UInv_ItemComponent* ItemComponent) const;
 	
 	FInv_GridItemEvent OnGridBeginGrabItem;
+	
+	FInv_GridEvent OnGridEndGrabItem;
 	
 	void DropGrabbedItem();
 	
@@ -47,9 +50,11 @@ public:
 	
 	void StartGrabbing(FInv_GridItem* ItemWidget);
 	
-	void StartGrabbing(const FInv_GridItem& GridItem);
-	
 	void RemoveGridItem(const FInv_GridItem& GridItem);
+	
+	void HidePossibleGridSlotsForGrabbedItem();
+	
+	void ShowPossibleGridSlotsForGrabbedItem();
 	
 protected:
 	virtual void NativePreConstruct() override;
@@ -106,13 +111,14 @@ private:
 	void UpdateGrabbedQuery();
 	
 	bool IsMatchingCategory(UInv_InventoryItem* Item);
+	void ApplyGridIconBrush(UInv_ItemWidget* ItemWidget, const FInv_ItemSpec& ItemSpec) const;
+
+	UInv_ItemWidget* CreateItemWidget(const FInv_ItemSpec& ItemSpec) const;
 	
-	UInv_ItemWidget* CreateItemWidget(const FInv_GridFragment* GridFragment, const FInv_IconFragment* IconFragment);
+	void OccupyGridSlots(FInv_GridItem& GridItem);
+	void UnoccupyGridSlots(const FInv_GridItem& GridItem);
 	
-	void SetGridItemOnSlots(FInv_GridItem& GridItem);
-	void ResetGridItemFromSlots(FInv_GridItem& GridItem);
-	
-	void SetGridSlotsAvailabilityInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D);
+	void SetGridSlotAvailabilityInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D);
 	
 	void Stack(const FInv_SlotAvailability& SlotAvailability);
 	
@@ -130,6 +136,9 @@ private:
 
 	UFUNCTION()
 	void OnGridSlotPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnGridSlotUnPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent);
 	
 	UFUNCTION()
 	void OnGridSlotBeginHover(UInv_GridSlot* GridSlot);
@@ -164,11 +173,11 @@ private:
 	
 	FInv_GridItem* FindOverlappingGridItem(int32 Index);
 	
-	FInv_SlotAvailabilityResult GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
+	FInv_SlotAvailabilityResult SearchGridForSlotAvailability(const FInv_ItemSpec& ItemSpec) const;
 	
 	FInv_GridGrabQuery GrabbedQuery;
 	
-	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget) const;
+	EInv_GridSlotQuadrant GetGridSlotQuadrant(UUserWidget* Widget, const FVector2D& MousePosition) const;
 	
 	FIntPoint ViewportPositionToGridCoordinate(const FVector2D& Position);
 

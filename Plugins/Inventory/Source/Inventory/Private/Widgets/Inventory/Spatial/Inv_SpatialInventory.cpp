@@ -30,6 +30,10 @@ void UInv_SpatialInventory::NativeOnInitialized()
 	Grid_Consumables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
 	Grid_Craftables->OnGridBeginGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridBeginGrabItem);
 	
+	Grid_Equippables->OnGridEndGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridEndGrabItem);
+	Grid_Consumables->OnGridEndGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridEndGrabItem);
+	Grid_Craftables->OnGridEndGrabItem.BindUObject(this, &UInv_SpatialInventory::OnGridEndGrabItem);
+	
 	WidgetTree->ForEachWidget([this](UWidget* Widget)
 	{
 		if (UInv_EquippedGridSlot* EquipSlot = Cast<UInv_EquippedGridSlot>(Widget))
@@ -40,6 +44,32 @@ void UInv_SpatialInventory::NativeOnInitialized()
 	});
 	
 	SwitchGridCategory(EInv_ItemCategory::Equippable);
+}
+
+void UInv_SpatialInventory::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	
+	if (GrabbedGridItem && ShouldDropItem())
+	{
+		if (!bHasChangedGrabbedItemGridPossibilities)
+		{
+			bHasChangedGrabbedItemGridPossibilities = true;
+			GetActiveGrid()->HidePossibleGridSlotsForGrabbedItem();
+		}
+	}
+	else if (GrabbedGridItem)
+	{
+		if (bHasChangedGrabbedItemGridPossibilities)
+		{
+			GetActiveGrid()->ShowPossibleGridSlotsForGrabbedItem();
+			bHasChangedGrabbedItemGridPossibilities = false;
+		}
+	}
+	else
+	{
+		bHasChangedGrabbedItemGridPossibilities = false;
+	}
 }
 
 FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -58,12 +88,11 @@ FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry,
 		}
 		else
 		{
-			// Handle returning or stacking the item in the inventory
+			// Place the item back on the grid
 			GetActiveGrid()->PlaceGrabbedItemOnGrid();
 		}
 		
-		GrabbedGridItem = nullptr;
-		GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+		OnGridEndGrabItem();
 		return FReply::Handled();
 	}
 	
@@ -75,6 +104,12 @@ void UInv_SpatialInventory::OnGridBeginGrabItem(FInv_GridItem& GridItem)
 	GrabbedGridItem = &GridItem;
 	GetOwningPlayer()->SetInputMode(FInputModeUIOnly());
 	SetFocus();
+}
+
+void UInv_SpatialInventory::OnGridEndGrabItem()
+{
+	GrabbedGridItem = nullptr;
+	GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
 }
 
 void UInv_SpatialInventory::OnEquipSlotClicked(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag)
@@ -115,7 +150,7 @@ FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_Item
 {
 	const UInv_InventoryGrid* GridToCheck = GetGridByCategory(ItemComponent->GetItemSpec().GetItemCategory());
 	check(IsValid(GridToCheck));
-	return GridToCheck->GetSlotAvailability(ItemComponent);
+	return GridToCheck->SearchGridForSlotAvailability(ItemComponent);
 }
 
 void UInv_SpatialInventory::SwitchGridCategory(EInv_ItemCategory Category)

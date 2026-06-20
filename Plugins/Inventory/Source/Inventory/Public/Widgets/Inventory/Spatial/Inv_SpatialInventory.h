@@ -26,7 +26,9 @@ protected:
 	virtual void NativePreConstruct() override;
 	
 	virtual void NativeOnInitialized() override;
-
+	
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
 public:
@@ -69,6 +71,8 @@ private:
 	
 	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
 	
+	void OnGridEndGrabItem();
+	
 	FInv_GridItem* GrabbedGridItem;
 	
 	bool CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const;
@@ -81,4 +85,6 @@ private:
 	
 	UPROPERTY()
 	TArray<FInv_GridItem> EquippedGridItems; 
+	
+	bool bHasChangedGrabbedItemGridPossibilities { false };
 };

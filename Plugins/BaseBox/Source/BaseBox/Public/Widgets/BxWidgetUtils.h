@@ -27,7 +27,7 @@ public:
 	 * or what are referred to as hysteresis problems, both caused by depending on geometry from the previous frame
 	 * being used to advise how to layout a dependent object the current frame.
 	 */
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	UFUNCTION(BlueprintPure, Category="Base Box Widget Utils")
 	static FVector2D GetCachedWidgetPosition(UWidget* Widget);
 	
 	/** 
@@ -43,7 +43,7 @@ public:
 	 * or what are referred to as hysteresis problems, both caused by depending on geometry from the previous frame
 	 * being used to advise how to layout a dependent object the current frame.
 	 */
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	UFUNCTION(BlueprintPure, Category="Base Box Widget Utils")
 	static FVector2D GetCachedWidgetCenter(UWidget* Widget);
 
 	/** 
@@ -59,7 +59,7 @@ public:
 	 * or what are referred to as hysteresis problems, both caused by depending on geometry from the previous frame
 	 * being used to advise how to layout a dependent object the current frame.
 	 */
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	UFUNCTION(BlueprintPure, Category="Base Box Widget Utils")
 	static FVector2D GetCachedWidgetBottomRight(UWidget* Widget);
 	
 	/** 
@@ -75,7 +75,7 @@ public:
 	 * or what are referred to as hysteresis problems, both caused by depending on geometry from the previous frame
 	 * being used to advise how to layout a dependent object the current frame.
 	 */
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	UFUNCTION(BlueprintPure, Category="Base Box Widget Utils")
 	static bool IsPositionBoundByCachedWidget(const FVector2D& ViewportPosition, UWidget* Widget);
 
 	/** 
@@ -93,6 +93,6 @@ public:
 	 * 
 	 * @return The clamped position in viewport scale
 	 */
-	UFUNCTION(BlueprintPure, Category="Inventory Widget Utils")
+	UFUNCTION(BlueprintPure, Category="Base Box Widget Utils")
 	static FVector2D GetClampedWidgetPosition(const UWidget* Widget, const FVector2D& ViewportPosition);
 };

@@ -49,17 +49,17 @@ void FInv_UsableFragment::ApplyToCompositeWidget(UInv_CompositeWidget* Widget) c
 
 void FInv_HealthModifier::OnUsed(APlayerController* PlayerController)
 {
-	const FString Msg = FString::Printf(TEXT("Used Health Potion: +%dHP"), static_cast<int32>(GetValue()));
+	const FString Msg = FString::Printf(TEXT("Used Health Potion: + %dHP"), static_cast<int32>(GetValue()));
 	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Green, FString::Printf(TEXT("%s"), *Msg));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, FColor::Green, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
 
 void FInv_ManaModifier::OnUsed(APlayerController* PlayerController)
 {
-	const FString Msg = FString::Printf(TEXT("Used Mana Potion: +%dMP"), static_cast<int32>(GetValue()));
+	const FString Msg = FString::Printf(TEXT("Used Mana Potion: + %dMP"), static_cast<int32>(GetValue()));
 	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Cyan, FString::Printf(TEXT("%s"), *Msg));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, FColor::Cyan, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
 
@@ -67,7 +67,7 @@ void FInv_StrengthModifier::OnUsed(APlayerController* PlayerController)
 {
 	const FString Msg = FString::Printf(TEXT("Strength Modified: +%d Strength Gained"), static_cast<int32>(GetValue()));
 	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Green, FString::Printf(TEXT("%s"), *Msg));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, FColor::Green, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
 
@@ -75,7 +75,7 @@ void FInv_StrengthModifier::OnUnUsed(APlayerController* PlayerController)
 {
 	const FString Msg = FString::Printf(TEXT("Strength Modified: -%d Strength Lost"), static_cast<int32>(GetValue()));
 	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(0, 3.0f, FColor::Red, FString::Printf(TEXT("%s"), *Msg));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, FColor::Red, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
 }
 

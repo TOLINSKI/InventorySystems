@@ -22,6 +22,7 @@
 #include "Widgets/Item/Inv_ItemPopUp.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
 #include "Widgets/BxWidgetUtils.h"
+#include "Widgets/Inventory/GridSlots/Inv_EquippedGridSlot.h"
 
 void UInv_InventoryGrid::NativePreConstruct()
 {
@@ -56,20 +57,20 @@ void UInv_InventoryGrid::ReverseLastTickGridSlotEffects()
 	// Unoccupy last tick possible grid slots
 	if (FInv_GridItem* GrabbedGridItem = GrabbedQuery.GetGridItem(); GrabbedQuery.HasFoundPossibleGridIndex())
 	{
-		SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Unoccupied, GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
+		SetGridSlotAvailabilityInRange(EInv_GridSlotState::Unoccupied, GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
 	}
 	
 	// Occupy last tick blocking grid slots
 	for (const auto& BlockingGridItem : GrabbedQuery.GetBlockingGridItems())
 	{
-		SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, BlockingGridItem->GetIndex(), BlockingGridItem->GetGridSpan());
+		SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, BlockingGridItem->GetIndex(), BlockingGridItem->GetGridSpan());
 	}
 	GrabbedQuery.GetBlockingGridItems().Empty();
 
 	// Occupy last tick stackable grid slots
 	if (FInv_GridItem* LastStackable = GrabbedQuery.GetStackableGridItem())
 	{
-		SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, LastStackable->GetIndex(), LastStackable->GetGridSpan());
+		SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, LastStackable->GetIndex(), LastStackable->GetGridSpan());
 	}
 }
 
@@ -80,17 +81,18 @@ void UInv_InventoryGrid::UpdateGrabbedQuery()
 	FInv_GridItem* GrabbedGridItem = GrabbedQuery.GetGridItem();
 	
 	// Positioning
-	GrabbedQuery.UpdateGrabbedItemPosition(UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer()));
-	const EInv_GridSlotQuadrant GridSlotQuadrant = GetGridSlotQuadrant(GrabbedGridItem->GetItemWidget());
+	const FVector2D MousePositon = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+	GrabbedQuery.UpdateGrabbedItemPosition(MousePositon);
+	const EInv_GridSlotQuadrant GridSlotQuadrant = GetGridSlotQuadrant(GrabbedGridItem->GetItemWidget(), MousePositon);
 
 	// UE_LOG(LogInventory, Display, TEXT("Grid Slot Quadrant: %s"), *UEnum::GetValueAsString(GridSlotQuadrant));
 	
 	// Item is held outside the grid, return
 	if (GridSlotQuadrant == EInv_GridSlotQuadrant::None)
 	{
-		if (GrabbedQuery.HasFoundPossibleGridIndex())
+		if (GrabbedQuery.HasFoundPossibleGridIndex() && GrabbedQuery.CanReturnGrabbedItemToGrid())
 		{
-			SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
+			SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, GrabbedQuery.GetPossibleIndex(), GrabbedGridItem->GetGridSpan());
 		}
 		return;
 	}
@@ -108,7 +110,7 @@ void UInv_InventoryGrid::UpdateGrabbedQuery()
 	TSet<int32> OccupiedIndices = FindOccupiedIndices(Index, GrabbedGridSpan);
 	if (OccupiedIndices.IsEmpty())
 	{
-		SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, Index, GrabbedQuery.GetGridItem()->GetGridSpan());
+		SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, Index, GrabbedQuery.GetGridItem()->GetGridSpan());
 		GrabbedQuery.SetPossibleIndex(Index);
 		return;
 	}
@@ -161,9 +163,9 @@ void UInv_InventoryGrid::UpdateGrabbedQuery()
 	}
 }
 
-FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const UInv_ItemComponent* ItemComponent) const
+FInv_SlotAvailabilityResult UInv_InventoryGrid::SearchGridForSlotAvailability(const UInv_ItemComponent* ItemComponent) const
 {
-	return GetSlotAvailability(ItemComponent->GetItemSpec());
+	return SearchGridForSlotAvailability(ItemComponent->GetItemSpec());
 }
 
 void UInv_InventoryGrid::ConstructGrid()
@@ -188,8 +190,9 @@ void UInv_InventoryGrid::ConstructGrid()
 			GridSlot->SetArrayIndex(UInv_WidgetUtils::GridCoordinatesToIndex({Column, Row}, Columns));
 			GridSlots.Add(GridSlot);
 			GridSlot->OnGridSlotPressed.AddDynamic(this, &ThisClass::OnGridSlotPressed);
-			GridSlot->OnGridSlotBeginHover.AddDynamic(this, &ThisClass::OnGridSlotBeginHover); // ?
-			GridSlot->OnGridSlotEndHover.AddDynamic(this, &ThisClass::OnGridSlotEndHover); // ?
+			GridSlot->OnGridSlotUnPressed.AddDynamic(this, &ThisClass::OnGridSlotUnPressed);
+			GridSlot->OnGridSlotBeginHover.AddDynamic(this, &ThisClass::OnGridSlotBeginHover); 
+			GridSlot->OnGridSlotEndHover.AddDynamic(this, &ThisClass::OnGridSlotEndHover);
 		}
 	}
 }
@@ -204,18 +207,28 @@ bool UInv_InventoryGrid::IsMatchingCategory(UInv_InventoryItem* Item)
 	return Item->GetItemSpec().GetItemCategory() == ItemCategory;
 }
 
-UInv_ItemWidget* UInv_InventoryGrid::CreateItemWidget(const FInv_GridFragment* GridFragment, const FInv_IconFragment* IconFragment)
+void UInv_InventoryGrid::ApplyGridIconBrush(UInv_ItemWidget* ItemWidget, const FInv_ItemSpec& ItemSpec) const
 {
-	UInv_ItemWidget* ItemWidget = CreateWidget<UInv_ItemWidget>(GetOwningPlayer(), ItemWidgetClass);
+	const FInv_GridFragment* GridFragment = ItemSpec.GetFragment<FInv_GridFragment>();
+	const FInv_IconFragment* IconFragment = ItemSpec.GetFragment<FInv_IconFragment>();
+	check(GridFragment);
+	check(IconFragment);
+	
 	FSlateBrush Brush;
 	Brush.SetResourceObject(IconFragment->GetTexture());
 	Brush.ImageSize = SlotSize * GridFragment->GetGridSpan();
 	ItemWidget->GetIconImage()->SetBrush(Brush);
+}
+
+UInv_ItemWidget* UInv_InventoryGrid::CreateItemWidget(const FInv_ItemSpec& ItemSpec) const
+{
+	UInv_ItemWidget* ItemWidget = CreateWidget<UInv_ItemWidget>(GetOwningPlayer(), ItemWidgetClass);
+	ApplyGridIconBrush(ItemWidget, ItemSpec);
 	
 	return ItemWidget;
 }
 
-void UInv_InventoryGrid::SetGridItemOnSlots(FInv_GridItem& GridItem)
+void UInv_InventoryGrid::OccupyGridSlots(FInv_GridItem& GridItem)
 {
 	UInv_ItemWidget* ItemWidget = GridItem.GetItemWidget();
 	ItemWidget->SetVisibility(ESlateVisibility::Visible);
@@ -234,9 +247,9 @@ void UInv_InventoryGrid::SetGridItemOnSlots(FInv_GridItem& GridItem)
 	});
 }
 
-void UInv_InventoryGrid::ResetGridItemFromSlots(FInv_GridItem& GridItem)
+void UInv_InventoryGrid::UnoccupyGridSlots(const FInv_GridItem& GridItem)
 {
-	UInv_WidgetUtils::ForEach2D(GridSlots, GridItem.GetIndex(), GridItem.GetGridSpan(), Columns, [GridItemPtr = &GridItem](UInv_GridSlot* GridSlot)
+	UInv_WidgetUtils::ForEach2D(GridSlots, GridItem.GetIndex(), GridItem.GetGridSpan(), Columns, [](UInv_GridSlot* GridSlot)
 	{
 		GridSlot->SetGridSlotAvailability(EInv_GridSlotState::Unoccupied);
 		GridSlot->ResetGridItem();
@@ -256,7 +269,7 @@ void UInv_InventoryGrid::AddItem(UInv_InventoryItem* Item)
 {
 	if (!IsMatchingCategory(Item)) return;
 	
-	FInv_SlotAvailabilityResult Result = GetSlotAvailability(Item->GetItemSpec());
+	FInv_SlotAvailabilityResult Result = SearchGridForSlotAvailability(Item->GetItemSpec());
 	Result.Item = Item;
 	AddResult(Result);
 }
@@ -277,18 +290,16 @@ void UInv_InventoryGrid::AddResult(const FInv_SlotAvailabilityResult& Result)
 		}
 		
 		const FInv_ItemSpec& ItemSpec = Item->GetItemSpec();
-		const FInv_GridFragment* GridFragment = ItemSpec.GetFragment<FInv_GridFragment>();
-		const FInv_IconFragment* IconFragment = ItemSpec.GetFragment<FInv_IconFragment>();
-		check(GridFragment);
-		check(IconFragment);
-
+		UInv_ItemWidget* ItemWidget = CreateItemWidget(ItemSpec);
+		
 		const FInv_StackFragment* StackFragment = ItemSpec.GetFragment<FInv_StackFragment>();
 		const int32 MaxStackCount = StackFragment ? StackFragment->GetMaxStackCount() : 1 ;
 		
-		UInv_ItemWidget* ItemWidget = CreateItemWidget(GridFragment, IconFragment);
+		const FInv_GridFragment* GridFragment = ItemSpec.GetFragment<FInv_GridFragment>();
+		check(GridFragment != nullptr);
 		
 		FInv_GridItem& GridItem = GridItems.Add_GetRef(FInv_GridItem(Item, ItemWidget, SlotAvailability.ItemIndex, GridFragment->GetGridSpan(), SlotAvailability.StackCount, MaxStackCount));
-		SetGridItemOnSlots(GridItem);
+		OccupyGridSlots(GridItem);
 		
 		if (StackFragment)
 		{
@@ -312,16 +323,38 @@ void UInv_InventoryGrid::RemoveGridItem(const FInv_GridItem& GridItem)
 	GridItem.GetItemWidget()->OnItemBeginHover.RemoveAll(this);
 	GridItem.GetItemWidget()->OnItemEndHover.RemoveAll(this);
 	
-	SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Unoccupied, GridItem.GetIndex(), GridItem.GetGridSpan());
-	
-	
-	
 	const int32 IndexToRemove = GridItems.IndexOfByKey(GridItem);
 	check(GridItems.IsValidIndex(IndexToRemove));
+	
+	UnoccupyGridSlots(GridItem);
+	
 	GridItems.RemoveAtSwap(IndexToRemove);
 }
 
-FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_ItemSpec& ItemSpec) const
+void UInv_InventoryGrid::HidePossibleGridSlotsForGrabbedItem()
+{
+	GrabbedQuery.SetCanReturnGrabbedItemToGrid(true);
+	
+	if (!GrabbedQuery.IsGrabbing()) return;
+	
+	GrabbedQuery.SetCanReturnGrabbedItemToGrid(false);
+	FInv_GridItem* GrabbedItem = GrabbedQuery.GetGridItem();
+	SetGridSlotAvailabilityInRange(EInv_GridSlotState::Unoccupied, GrabbedQuery.GetPossibleIndex(), GrabbedItem->GetGridSpan());
+	UE_LOG(LogInventory, Warning, TEXT("Hide Possible Slots"));
+}
+
+void UInv_InventoryGrid::ShowPossibleGridSlotsForGrabbedItem()
+{
+	GrabbedQuery.SetCanReturnGrabbedItemToGrid(true);
+	
+	if (!GrabbedQuery.IsGrabbing()) return;
+	
+	FInv_GridItem* GrabbedItem = GrabbedQuery.GetGridItem();
+	SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, GrabbedQuery.GetPossibleIndex(), GrabbedItem->GetGridSpan());
+	UE_LOG(LogInventory, Warning, TEXT("Show Possible Slots"));
+}
+
+FInv_SlotAvailabilityResult UInv_InventoryGrid::SearchGridForSlotAvailability(const FInv_ItemSpec& ItemSpec) const
 {
 	TSet<int32> Visited;
 	FInv_SlotAvailabilityResult Result;
@@ -406,20 +439,24 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::GetSlotAvailability(const FInv_I
 	return Result;
 }
 
-EInv_GridSlotQuadrant UInv_InventoryGrid::GetGridSlotQuadrant(UUserWidget* Widget) const
+EInv_GridSlotQuadrant UInv_InventoryGrid::GetGridSlotQuadrant(UUserWidget* Widget, const FVector2D& MousePosition) const
 {
 	EInv_GridSlotQuadrant Result {EInv_GridSlotQuadrant::None};
 	
-	const FVector2D WidgetCenter = UBxWidgetUtils::GetCachedWidgetCenter(Widget);
-	if (!UBxWidgetUtils::IsPositionBoundByCachedWidget(UBxWidgetUtils::GetCachedWidgetPosition(Widget), GridPanel_Items)  
-		&& !UBxWidgetUtils::IsPositionBoundByCachedWidget(UBxWidgetUtils::GetCachedWidgetBottomRight(Widget), GridPanel_Items))
+	const FVector2D WidgetPosition = GrabbedQuery.GetRelativeWidgetPosition(MousePosition);
+	const FVector2D WidgetSize = Widget->GetDesiredSize();
+	const FVector2D WidgetCenter = WidgetPosition + WidgetSize / 2.f;
+	const FVector2D WidgetBottomRight = WidgetPosition + WidgetSize;
+	
+	if (!UBxWidgetUtils::IsPositionBoundByCachedWidget(WidgetPosition, GridPanel_Items)  
+		|| !UBxWidgetUtils::IsPositionBoundByCachedWidget(WidgetBottomRight, GridPanel_Items))
 	{
 		return Result;
 	}
 	
-	const FVector2D GridPosition = UBxWidgetUtils::GetCachedWidgetPosition(GridPanel_Items);
-	const float GridSlotLocalX = FMath::Fmod(WidgetCenter.X - GridPosition.X, GridSlotSize.X);
-	const float GridSlotLocalY = FMath::Fmod(WidgetCenter.Y - GridPosition.Y, GridSlotSize.Y);
+	const FVector2D GridPanelPosition = UBxWidgetUtils::GetCachedWidgetPosition(GridPanel_Items);
+	const float GridSlotLocalX = FMath::Fmod(WidgetCenter.X - GridPanelPosition.X, GridSlotSize.X);
+	const float GridSlotLocalY = FMath::Fmod(WidgetCenter.Y - GridPanelPosition.Y, GridSlotSize.Y);
 	
 	bool bIsTop = GridSlotLocalY < GridSlotSize.Y / 2.f;
 	bool bIsLeft = GridSlotLocalX < GridSlotSize.X / 2.f; 
@@ -498,7 +535,7 @@ UInv_GridSlot* UInv_InventoryGrid::FindGridSlotByCoordinates(const FIntPoint& Gr
 	return nullptr;
 }
 
-void UInv_InventoryGrid::SetGridSlotsAvailabilityInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D)
+void UInv_InventoryGrid::SetGridSlotAvailabilityInRange(EInv_GridSlotState State, int32 Index, const FIntPoint& Range2D)
 {
 	UInv_WidgetUtils::ForEach2D(GridSlots, Index, Range2D, Columns, [State](UInv_GridSlot* GridSlot)
 	{
@@ -508,10 +545,13 @@ void UInv_InventoryGrid::SetGridSlotsAvailabilityInRange(EInv_GridSlotState Stat
 
 bool UInv_InventoryGrid::CanFitRange(int32 Index, const FIntPoint& Range2D) const
 {
-	const FIntPoint LeftCorner = UInv_WidgetUtils::IndexToGridCoordinates(Index, Columns);
-	const FIntPoint RightCorner = LeftCorner + (Range2D - FIntPoint(1,1));
-	const int32 RightCornerIndex = UInv_WidgetUtils::GridCoordinatesToIndex(RightCorner, Columns);
-	return GridSlots.IsValidIndex(RightCornerIndex);
+	if (!GridSlots.IsValidIndex(Index)) return false;
+	
+	const FIntPoint TopLeft = UInv_WidgetUtils::IndexToGridCoordinates(Index, Columns);
+	const FIntPoint BottomRight = TopLeft + (Range2D - FIntPoint(1,1));
+	const int32 BottomRightIndex = UInv_WidgetUtils::GridCoordinatesToIndex(BottomRight, Columns);
+	
+	return GridSlots.IsValidIndex(BottomRightIndex);
 }
 
 TSet<int32> UInv_InventoryGrid::FindOccupiedIndices(int32 Index, const FIntPoint& Range2D) const
@@ -651,29 +691,30 @@ void UInv_InventoryGrid::CreatePopUpMenu(FInv_GridItem& GridItem)
 
 void UInv_InventoryGrid::StartGrabbing(FInv_GridItem* GridItem)
 {
+	check(GridItem != nullptr);
+	
 	if (GrabbedQuery.IsGrabbing()) return;
 	
-	check(GridItem != nullptr);
 	UInv_ItemWidget* ItemWidget = GridItem->GetItemWidget(); 
 	check(ItemWidget != nullptr);
 	
 	// Handle grabbed widget
-	const int32 ItemIndex = GridItem->GetIndex();
 	ItemWidget->RemoveFromParent();
+	ApplyGridIconBrush(ItemWidget, GridItem->GetItem()->GetItemSpec());
 	ItemWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 	ItemWidget->AddToViewport();
 	
 	// Handle grid slot availability
-	if (ItemIndex != INDEX_NONE)
-	{
-		SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Unoccupied, ItemIndex, GridItem->GetGridSpan());
-	}
-	
-	// Handle Grab Query
+	const int32 ItemIndex = GridItem->GetIndex();
 	UInv_GridSlot* GridSlot { nullptr };
 	if (GridSlots.IsValidIndex(ItemIndex))
 	{
 		GridSlot = GridSlots[ItemIndex];
+		UnoccupyGridSlots(*GridItem);
+	}
+	else
+	{
+		GridSlot = GridItem->GetEquippedGridSlot();
 	}
 	GrabbedQuery.StartGrabbing(*GridItem, UBxWidgetUtils::GetCachedWidgetPosition(GridSlot), UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer()));
 		
@@ -682,45 +723,6 @@ void UInv_InventoryGrid::StartGrabbing(FInv_GridItem* GridItem)
 	OnGridBeginGrabItem.ExecuteIfBound(*GridItem);
 }
  
-void UInv_InventoryGrid::StartGrabbing(const FInv_GridItem& GridItem)
-{
-	// if (GrabbedQuery.IsGrabbing()) return;
-	//
-	// const FInv_ItemSpec& ItemSpec = GridItem.GetItem()->GetItemSpec();
-	// const FInv_GridFragment* GridFragment = ItemSpec.GetFragment<FInv_GridFragment>();
-	// const FInv_IconFragment* IconFragment = ItemSpec.GetFragment<FInv_IconFragment>();
-	// check(GridFragment);
-	// check(IconFragment);
-	//
-	// UInv_ItemWidget* ItemWidget = CreateItemWidget(GridFragment, IconFragment);
-	// ItemWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-	//
-	// const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
-	// ItemWidget->AddToViewport();
-	// ItemWidget->SetPositionInViewport(MousePosition - FVector2D(20.f), false);
-	//
-	// FInv_GridItem& NewGridItem = GridItems.Add_GetRef(FInv_GridItem(GridItem.GetItem(), ItemWidget, INDEX_NONE, GridFragment->GetGridSpan(), GridItem.GetStackCount(), GridItem.GetMaxStackCount()));
-	// GrabbedQuery.StartGrabbing(NewGridItem, MousePosition);
-}
-
-void UInv_InventoryGrid::OnGridSlotPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent)
-{
-	HidePopUpDescription();
-	
-	FInv_GridItem* GridItem = GridSlot->GetGridItem();
-	if (!GridItem) return;
-	
-	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-	{
-		StartGrabbing(GridItem);
-	}
-	
-	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
-	{
-		CreatePopUpMenu(*GridItem);
-	}
-}
-
 void UInv_InventoryGrid::ExchangeStacks(FInv_GridItem& Source, FInv_GridItem& TargetItem)
 {
 	const int32 AvailableStackableAmount = TargetItem.GetStackableAmount();
@@ -738,8 +740,9 @@ void UInv_InventoryGrid::PlaceGrabbedItemOnGrid()
 	
 	ReverseLastTickGridSlotEffects();
 	FInv_GridItem* GrabbedGridItem = GrabbedQuery.GetGridItem();
+	check(GrabbedGridItem != nullptr);
 	
-	// STACKED: Add all possible stacks. If got rid of all stacks, remove the item from the grid.
+	// STACKING: Add all possible stacks. If got rid of all stacks, remove the item from the grid.
 	if (FInv_GridItem* StackableGridItem = GrabbedQuery.GetStackableGridItem())
 	{
 		ExchangeStacks(*GrabbedGridItem, *StackableGridItem);
@@ -750,11 +753,14 @@ void UInv_InventoryGrid::PlaceGrabbedItemOnGrid()
 		}
 	}
 	
+	// Check if all item was stacked
+	if (!GrabbedGridItem) return;
+	
 	// Place item back on grid if needed
-	if (GrabbedGridItem && GrabbedQuery.HasFoundPossibleGridIndex())
+	if (GrabbedQuery.HasFoundPossibleGridIndex())
 	{
 		GrabbedGridItem->ResetArrayIndex(GrabbedQuery.GetPossibleIndex());
-		SetGridItemOnSlots(*GrabbedGridItem);
+		OccupyGridSlots(*GrabbedGridItem);
 	}	
 	
 	// Set cursor as grab hand if needed
@@ -792,6 +798,30 @@ void UInv_InventoryGrid::HidePopUpDescription()
 	GetWorld()->GetTimerManager().ClearTimer(DescriptionTimer);
 }
 
+void UInv_InventoryGrid::OnGridSlotPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent)
+{
+	HidePopUpDescription();
+	
+	FInv_GridItem* GridItem = GridSlot->GetGridItem();
+	if (!GridItem) return;
+	
+	if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		StartGrabbing(GridItem);
+	}
+	
+	if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		CreatePopUpMenu(*GridItem);
+	}
+}
+
+void UInv_InventoryGrid::OnGridSlotUnPressed(UInv_GridSlot* GridSlot, const FPointerEvent& MouseEvent)
+{
+	OnGridEndGrabItem.ExecuteIfBound();
+	PlaceGrabbedItemOnGrid();
+}
+
 void UInv_InventoryGrid::OnGridSlotBeginHover(UInv_GridSlot* GridSlot)
 {
 	if (GrabbedQuery.IsGrabbing()) return;
@@ -799,7 +829,7 @@ void UInv_InventoryGrid::OnGridSlotBeginHover(UInv_GridSlot* GridSlot)
 	FInv_GridItem* GridItem = FindGridItem(GridSlot);
 	if(!GridItem) return;
 	
-	SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Selected, GridItem->GetIndex(), GridItem->GetGridSpan());
+	SetGridSlotAvailabilityInRange(EInv_GridSlotState::Selected, GridItem->GetIndex(), GridItem->GetGridSpan());
 	GetWorld()->GetTimerManager().SetTimer(DescriptionTimer, [this, GridItem]()
 	{
 	   CreatePopUpDescription(*GridItem);
@@ -821,7 +851,7 @@ void UInv_InventoryGrid::OnGridSlotEndHover(UInv_GridSlot* GridSlot)
 		if (NewGridItem != LastGridItem)
 		{
 			HidePopUpDescription();
-			SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, LastGridItem->GetIndex(), LastGridItem->GetGridSpan());
+			SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, LastGridItem->GetIndex(), LastGridItem->GetGridSpan());
 			
 			if (!NewGridItem)
 			{
@@ -834,7 +864,7 @@ void UInv_InventoryGrid::OnGridSlotEndHover(UInv_GridSlot* GridSlot)
 
 	// Not hovering grid slots anymore, set default cursor
 	HidePopUpDescription();
-	SetGridSlotsAvailabilityInRange(EInv_GridSlotState::Occupied, LastGridItem->GetIndex(), LastGridItem->GetGridSpan());
+	SetGridSlotAvailabilityInRange(EInv_GridSlotState::Occupied, LastGridItem->GetIndex(), LastGridItem->GetGridSpan());
 	SetCursor(EMouseCursor::Type::Default);
 }
 
