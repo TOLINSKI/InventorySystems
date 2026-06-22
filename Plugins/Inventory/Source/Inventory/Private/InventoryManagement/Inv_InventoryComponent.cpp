@@ -121,6 +121,16 @@ void UInv_InventoryComponent::Server_UseItem_Implementation(UInv_InventoryItem* 
 	}
 }
 
+void UInv_InventoryComponent::Server_EquipItem_Implementation(UInv_InventoryItem* Item)
+{
+	OnItemEquipped.Broadcast(Item);
+}
+
+void UInv_InventoryComponent::Server_UnequipItem_Implementation(UInv_InventoryItem* Item)
+{
+	OnItemUnequipped.Broadcast(Item);
+}
+
 void UInv_InventoryComponent::SpawnDroppedItem(UInv_InventoryItem* Item, int32 StackCount) const
 {
 	const FVector PawnLocation = OwningPlayer->GetPawn()->GetActorLocation();

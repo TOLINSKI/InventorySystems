@@ -12,12 +12,12 @@ class UInv_InventoryItem;
 class UInv_InventoryWidgetBase;
 struct FInv_SlotAvailabilityResult;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChanged, UInv_InventoryItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemEvent, UInv_InventoryItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryStackChanged, const FInv_SlotAvailabilityResult&, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryActionFailed);
 
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Abstract, Blueprintable, BlueprintType)
+UCLASS(ClassGroup=(Inventory), meta=(BlueprintSpawnableComponent), Abstract, Blueprintable, BlueprintType)
 class INVENTORY_API UInv_InventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -30,11 +30,17 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPROPERTY(BlueprintAssignable, Category="Inv Events")
-	FInventoryItemChanged OnItemAdded;
+	FInventoryItemEvent OnItemAdded;
 	
 	UPROPERTY(BlueprintAssignable, Category="Inv Events")
-	FInventoryItemChanged OnItemRemoved;
+	FInventoryItemEvent OnItemRemoved;
 
+	UPROPERTY(BlueprintAssignable, Category="Inv Events: Equipment")
+	FInventoryItemEvent OnItemEquipped;
+	
+	UPROPERTY(BlueprintAssignable, Category="Inv Events: Equipment")
+	FInventoryItemEvent OnItemUnequipped;
+	
 	UPROPERTY(BlueprintAssignable, Category="Inv Events")
 	FInventoryActionFailed OnItemAddingFailed;
 	
@@ -55,6 +61,12 @@ public:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_UseItem(UInv_InventoryItem* Item, int32 Amount);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_EquipItem(UInv_InventoryItem* Item);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_UnequipItem(UInv_InventoryItem* Item);
 	
 	void SpawnDroppedItem(UInv_InventoryItem* Item, int32 StackCount) const;
 	

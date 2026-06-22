@@ -10,6 +10,8 @@
 
 #include "Inv_SpatialInventory.generated.h"
 
+class UInv_EquipmentProxyWidget;
+class UInv_GridSlot;
 class UInv_EquippedGridSlot;
 class UWidgetSwitcher;
 class UInv_InventoryGrid;
@@ -28,8 +30,6 @@ protected:
 	virtual void NativeOnInitialized() override;
 	
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	void PlaceGrabbedItemBackOnGrid();
-	void UnequipGrabbedItem();
 
 	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
@@ -46,7 +46,7 @@ protected:
 	void OnCategorySelected(EInv_ItemCategory Category);
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
-	bool ShouldDropItem();
+	bool ShouldDropGrabbedItem();
 
 	virtual UInv_InventoryItem* GetGrabbedItem() const override;
 	
@@ -70,22 +70,26 @@ private:
 	TObjectPtr<UInv_InventoryGrid> Grid_Craftables;
 	
 	UInv_InventoryGrid* GetGridByCategory(EInv_ItemCategory Category) const;
-	
-	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
-	void HandleEndGrabbingPreviouslyEquippedItem(bool bItemPlacedOnGrid);
-	void HandlePreviouslyEquippedItem(bool bItemPlacedOnGrid);
 
-	void OnGridEndGrabItem(bool bItemPlacedOnGrid);
-	
 	FInv_GridItem* GrabbedGridItem;
 	
+	void DropGrabbedItem();
+	
+	// Grid
+	void OnGridBeginGrabItem(FInv_GridItem& GridItem);
+	void OnGridEndGrabItem(bool bItemPlacedOnGrid);
+	
+	void PlaceGrabbedItemBackOnGrid();
+	
+	// Equipment
 	bool CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const;
 	
 	UFUNCTION()
 	void OnEquipSlotPressed(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
-	void EquipFreshItem(UInv_EquippedGridSlot* EquipSlot);
-	void EquipPreviouslyEquippedItem(UInv_EquippedGridSlot* ExistingEquipSlot);
-
+	void EquipGridItem(FInv_GridItem* GridItem, UInv_EquippedGridSlot* EquipSlot);
+	void UnequipGridItem(FInv_GridItem* GridItem);
+	bool WasItemPreviouslyEquipped(FInv_GridItem* GridItem);
+	
 	UFUNCTION()
 	void OnEquipSlotUnPressed(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag);
 	
@@ -99,4 +103,10 @@ private:
 	TArray<FInv_GridItem> EquippedGridItems; 
 	
 	bool bHasChangedGrabbedItemGridPossibilities { false };
+	
+	UFUNCTION()
+	void OnProxyUnPressed(UInv_EquipmentProxyWidget* ProxyWidget, const FPointerEvent& MouseEvent);
+	
+	UFUNCTION()
+	void OnProxyPressed(UInv_EquipmentProxyWidget* ProxyWidget, const FPointerEvent& MouseEvent);
 };

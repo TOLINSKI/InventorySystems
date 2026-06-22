@@ -6,7 +6,7 @@
 
 void FInv_UsableFragment::OnUsed(APlayerController* PlayerController)
 {
-	if (bCanOnlyUseOnce && bIsUsed) return;
+	if (bIsUsed && !bIsSingleUse) return;
 	bIsUsed = true;
 	
 	for (auto& Modifier : ValueModifiers)
@@ -18,7 +18,7 @@ void FInv_UsableFragment::OnUsed(APlayerController* PlayerController)
 
 void FInv_UsableFragment::OnUnUsed(APlayerController* PlayerController)
 {
-	if (bCanOnlyUseOnce && !bIsUsed) return;
+	if (!bIsUsed && !bIsSingleUse) return;
 	bIsUsed = false;
 	
 	for (auto& Modifier : ValueModifiers)
@@ -77,5 +77,11 @@ void FInv_StrengthModifier::OnUnUsed(APlayerController* PlayerController)
 	if (GEngine)
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 3.0f, FColor::Red, FString::Printf(TEXT("%s"), *Msg));
 	UE_LOG(LogInventory, Display, TEXT("%s"), *Msg);
+}
+
+void FInv_EquipmentFragment::InitFragment()
+{
+	FInv_ItemFragment::InitFragment();
+	ensure(EquipmentClass != nullptr);
 }
 

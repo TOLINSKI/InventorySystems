@@ -6,9 +6,11 @@
 #include "Inventory.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagement/Inv_InventoryComponent.h"
 #include "InventoryManagement/Inv_InventoryStatics.h"
 #include "Items/Inv_InventoryItem.h"
 #include "Items/Components/Inv_ItemComponent.h"
+#include "Widgets/Equipment/Inv_EquipmentProxyWidget.h"
 #include "Widgets/Inventory/GridSlots/Inv_EquippedGridSlot.h"
 #include "Widgets/Inventory/Spatial/Inv_InventoryGrid.h"
 #include "Widgets/Item/Inv_ItemWidget.h"
@@ -41,6 +43,16 @@ void UInv_SpatialInventory::NativeOnInitialized()
 			EquipSlot->OnGridSlotBeginHover.AddDynamic(this, &ThisClass::OnEquipSlotBeginHover);
 			EquipSlot->OnGridSlotEndHover.AddDynamic(this, &ThisClass::OnEquipSlotEndHover);
 		}
+		
+		if (UInv_EquipmentProxyWidget* ProxyWidget = Cast<UInv_EquipmentProxyWidget>(Widget))
+		{
+			ProxyWidget->OnProxyPressed.BindUObject(this, &ThisClass::OnProxyPressed);
+			ProxyWidget->OnProxyUnPressed.BindUObject(this, &ThisClass::OnProxyUnPressed);
+			ProxyWidget->OnProxyEndHover.BindWeakLambda(this, [](UInv_EquipmentProxyWidget* Widget)
+			{
+				Widget->StopDragging();
+			});
+		}
 	});
 	
 	SwitchGridCategory(EInv_ItemCategory::Equippable);
@@ -50,7 +62,7 @@ void UInv_SpatialInventory::NativeTick(const FGeometry& MyGeometry, float InDelt
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	
-	if (GrabbedGridItem && ShouldDropItem())
+	if (GrabbedGridItem && ShouldDropGrabbedItem())
 	{
 		if (!bHasChangedGrabbedItemGridPossibilities)
 		{
@@ -76,23 +88,12 @@ FReply UInv_SpatialInventory::NativeOnMouseButtonUp(const FGeometry& InGeometry,
 {
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
-		if (!GrabbedGridItem)
-		{
-			return FReply::Unhandled();
-		}
+		if (!GrabbedGridItem) return FReply::Unhandled();
 	
-		if (ShouldDropItem())
-		{
-			// Drop the item (do not return it to the grid)
-			UnequipGrabbedItem();
-			OnGridEndGrabItem(false);
-			GetActiveGrid()->DropGrabbedItem();
-		}
+		if (ShouldDropGrabbedItem())
+			DropGrabbedItem();
 		else
-		{
-			// Place the item back on the grid
 			PlaceGrabbedItemBackOnGrid();
-		}
 		
 		return FReply::Handled();
 	}
@@ -109,7 +110,14 @@ void UInv_SpatialInventory::OnGridBeginGrabItem(FInv_GridItem& GridItem)
 
 void UInv_SpatialInventory::OnGridEndGrabItem(bool bItemPlacedOnGrid)
 {
-	HandleEndGrabbingPreviouslyEquippedItem(bItemPlacedOnGrid);
+	if (WasItemPreviouslyEquipped(GrabbedGridItem))
+	{
+		if (bItemPlacedOnGrid) 
+			UnequipGridItem(GrabbedGridItem);
+		else 
+			EquipGridItem(GrabbedGridItem, GrabbedGridItem->GetEquippedGridSlot());
+	}
+	
 	GrabbedGridItem = nullptr;
 	GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
 	SetCursor(EMouseCursor::Default);
@@ -126,20 +134,15 @@ void UInv_SpatialInventory::OnEquipSlotPressed(UInv_EquippedGridSlot* EquipSlot,
 
 void UInv_SpatialInventory::OnEquipSlotUnPressed(UInv_EquippedGridSlot* EquipSlot, const FGameplayTag& EquipmentTag)
 {
+	if (!GrabbedGridItem) return;
+	
 	if (!CanEquipGrabbedItem(EquipSlot))
 	{
 		PlaceGrabbedItemBackOnGrid();
 		return;
 	}
 
-	if (GrabbedGridItem->GetEquippedGridSlot())
-	{
-		EquipPreviouslyEquippedItem(EquipSlot);
-	}
-	else
-	{
-		EquipFreshItem(EquipSlot);
-	}
+	EquipGridItem(GrabbedGridItem, EquipSlot);
 	
 	SetCursor(EMouseCursor::GrabHand);
 }
@@ -172,74 +175,98 @@ void UInv_SpatialInventory::OnEquipSlotEndHover(UInv_GridSlot* EquipSlot)
 	}
 }
 
-void UInv_SpatialInventory::EquipFreshItem(UInv_EquippedGridSlot* EquipSlot)
+void UInv_SpatialInventory::OnProxyUnPressed(UInv_EquipmentProxyWidget* ProxyWidget, const FPointerEvent& MouseEvent)
 {
+	if (MouseEvent.GetEffectingButton() != EKeys::LeftMouseButton) return; 
+	
+	if (GrabbedGridItem && GrabbedGridItem->IsValid())
+	{
+		PlaceGrabbedItemBackOnGrid();
+	}
+	
+	ProxyWidget->StopDragging();
+}
+
+void UInv_SpatialInventory::OnProxyPressed(UInv_EquipmentProxyWidget* ProxyWidget, const FPointerEvent& MouseEvent)
+{
+	if (MouseEvent.GetEffectingButton() != EKeys::LeftMouseButton) return; 
+	
+	if (GrabbedGridItem && GrabbedGridItem->IsValid())
+	{
+		PlaceGrabbedItemBackOnGrid();
+		return;
+	}
+	
+	ProxyWidget->StartDragging();
+}
+
+void UInv_SpatialInventory::EquipGridItem(FInv_GridItem* GridItem, UInv_EquippedGridSlot* EquipSlot)
+{
+	if (WasItemPreviouslyEquipped(GridItem))
+	{
+		check(GridItem && GridItem->IsValid());
+	
+		GridItem->SetArrayIndex(INDEX_NONE);
+		EquipSlot->EquipGridItem(*GridItem);
+		GetActiveGrid()->StopGrabbing();
+		GridItem = nullptr;
+		return;
+	}
+	
 	// Copy grid item and remove from original grid
-	FInv_GridItem& EquippedGridItem = EquippedGridItems.Add_GetRef(*GrabbedGridItem);
+	FInv_GridItem& EquippedGridItem = EquippedGridItems.Add_GetRef(*GridItem);
 	UInv_InventoryGrid* ActiveGrid = GetActiveGrid();
 	ActiveGrid->StopGrabbing();
-	ActiveGrid->RemoveGridItem(*GrabbedGridItem);
+	ActiveGrid->RemoveGridItem(*GridItem);
 	ActiveGrid->SetCursor(EMouseCursor::Default);
-	GrabbedGridItem = nullptr;
+	GridItem = nullptr;
 		
 	// Equip item
 	EquippedGridItem.SetArrayIndex(INDEX_NONE);
 	EquipSlot->EquipGridItem(EquippedGridItem);
 	GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
-}
-
-void UInv_SpatialInventory::EquipPreviouslyEquippedItem(UInv_EquippedGridSlot* ExistingEquipSlot)
-{
-	check(GrabbedGridItem && GrabbedGridItem->IsValid());
 	
-	GrabbedGridItem->SetArrayIndex(INDEX_NONE);
-	ExistingEquipSlot->EquipGridItem(*GrabbedGridItem);
-	GetActiveGrid()->StopGrabbing();
-	GrabbedGridItem = nullptr;
+	UInv_InventoryComponent* IC = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	IC->Server_EquipItem(EquippedGridItem.GetItem());
 }
 
-void UInv_SpatialInventory::HandleEndGrabbingPreviouslyEquippedItem(bool bItemPlacedOnGrid)
+void UInv_SpatialInventory::UnequipGridItem(FInv_GridItem* GridItem)
 {
-	if (UInv_EquippedGridSlot* EquipSlot = GrabbedGridItem->GetEquippedGridSlot())
+	UInv_EquippedGridSlot* EquipSlot = GridItem->GetEquippedGridSlot();
+	check(EquipSlot != nullptr);
+	
+	const int32 EquipIndex = EquippedGridItems.IndexOfByPredicate([EquipSlot](const FInv_GridItem& GridItem)
 	{
-		if (bItemPlacedOnGrid)
-		{
-			UnequipGrabbedItem();
-		}
-		else
-		{
-			EquipPreviouslyEquippedItem(EquipSlot);
-		}
-	}
+		return GridItem.GetEquippedGridSlot() == EquipSlot;
+	});
+	
+	UInv_InventoryComponent* IC = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	IC->Server_UnequipItem(GridItem->GetItem());
+
+	GridItem->SetEquipSlot(nullptr);
+	
+	if (!EquippedGridItems.IsValidIndex(EquipIndex)) return;
+	EquippedGridItems.RemoveAtSwap(EquipIndex);
 }
 
 bool UInv_SpatialInventory::CanEquipGrabbedItem(const UInv_EquippedGridSlot* EquippedSlot) const
 {
-	return !EquippedSlot->IsOccupied() 
-			&& GrabbedGridItem 
+	return	IsValid(EquippedSlot)
+			&& !EquippedSlot->IsOccupied() 
+			&& GrabbedGridItem != nullptr
+			&& GrabbedGridItem->IsValid()
 			&& GrabbedGridItem->GetItemTag().MatchesTag(EquippedSlot->GetEquipmentTag());
 }
 
 void UInv_SpatialInventory::PlaceGrabbedItemBackOnGrid()
 {
+	check(GrabbedGridItem != nullptr);
 	OnGridEndGrabItem(GetActiveGrid()->TryPlaceGrabbedItemOnGrid());
 }
 
-void UInv_SpatialInventory::UnequipGrabbedItem()
+bool UInv_SpatialInventory::WasItemPreviouslyEquipped(FInv_GridItem* GridItem)
 {
-	if (UInv_EquippedGridSlot* EquipSlot = GrabbedGridItem->GetEquippedGridSlot())
-	{
-		// Item placed on grid successfully, clear all equipped references
-		const int32 EquipIndex = EquippedGridItems.IndexOfByPredicate([EquipSlot](const FInv_GridItem& GridItem)
-		{
-			return GridItem.GetEquippedGridSlot() == EquipSlot;
-		});
-		if (EquippedGridItems.IsValidIndex(EquipIndex))
-		{
-			EquippedGridItems.RemoveAtSwap(EquipIndex);
-		}
-		GrabbedGridItem->SetEquipSlot(nullptr);
-	}
+	return GrabbedGridItem->GetEquippedGridSlot() != nullptr;
 }
 
 FInv_SlotAvailabilityResult UInv_SpatialInventory::GetGridAvailability(UInv_ItemComponent* ItemComponent) const
@@ -290,4 +317,17 @@ UInv_InventoryGrid* UInv_SpatialInventory::GetActiveGrid() const
 	return Cast<UInv_InventoryGrid>(Grid_Switcher->GetActiveWidget());
 }
 
-
+void UInv_SpatialInventory::DropGrabbedItem()
+{
+	if (WasItemPreviouslyEquipped(GrabbedGridItem))
+	{
+		UInv_InventoryComponent* IC = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+		IC->Server_UnequipItem(GrabbedGridItem->GetItem());
+	}
+	
+	GetActiveGrid()->DropGrabbedItem();
+	
+	GrabbedGridItem = nullptr;
+	GetOwningPlayer()->SetInputMode(FInputModeGameAndUI());
+	SetCursor(EMouseCursor::Default);
+}

@@ -39,8 +39,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FInv_UsableModifier>> ValueModifiers;
 	
-	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
-	bool bCanOnlyUseOnce { false };
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bIsSingleUse { true };
 };
 
 USTRUCT(BlueprintType, DisplayName="Health Modifier")
@@ -69,4 +69,18 @@ struct INVENTORY_API FInv_StrengthModifier : public FInv_UsableModifier
 public:
 	virtual void OnUsed(APlayerController* PlayerController) override;
 	virtual void OnUnUsed(APlayerController* PlayerController) override;
+};
+
+USTRUCT(BlueprintType, DisplayName= "Equipment Fragment")
+struct INVENTORY_API FInv_EquipmentFragment : public FInv_ItemFragment
+{
+	GENERATED_BODY()
+	
+	virtual void InitFragment() override;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<AActor> EquipmentClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FName EquipmentSocket;
 };
